@@ -1,18 +1,17 @@
-import os
-import sys
+# import os
+# import sys
 from json import JSONDecodeError
-
 import eyed3
 import shutil
 import urllib
 import requests
 from pytube import YouTube
-from useragent import UserAgent
+# from useragent import UserAgent
 from bs4 import BeautifulSoup
 from moviepy.editor import *
 
 # Global Variables
-ua = UserAgent()
+# ua = UserAgent()
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.13 (KHTML, like Gecko) Chrome/24.0.1290.1 Safari/537.13'}
 
@@ -25,8 +24,11 @@ def optionSelect():
     1) Cache Mode
     Provide a .txt file with links to album's google result pages, seperated by lines.
 
-    2) Search Mode
-    Search for an artist's discography, and pull songs directly.
+    2) Search Mode (Artist)
+    Search for an artist's discography. Results will be stored in the 
+
+    3) Search Mode (Album)
+    Search for an album. Recommended for albums with generic artist like "Various".
 
     0) Exit
 
@@ -35,7 +37,9 @@ def optionSelect():
     if option == '1':
         cacheMode()
     elif option == '2':
-        searchMode()
+        searchMode(0)
+    elif option == '3':
+        searchMode(1)
     elif option == '0':
         sys.exit()
     else:
@@ -58,7 +62,7 @@ def cacheMode():
     downloadAlbum(resultArray)
 
 
-def searchMode():
+def searchMode(mode):
     resultCount = 0
     resultLinks = []
     temp = ''
@@ -66,8 +70,11 @@ def searchMode():
     # Get input for a songwriter
     artist = input('\nPlease input the name of the artist you want to search the discography of.\n\t')
     searchLen = len(artist)
-    searchArtist = urllib.parse.quote_plus(artist)
+    searchArtist = urllib.parse.quote_plus(artist) # Makes artist string OK for URLs
 
+
+
+    '''
     # discogs Google results scrape
     query = 'https://www.google.com/search?q=discogs+' + searchArtist
     page = ""
@@ -103,6 +110,7 @@ def searchMode():
             print(resultLinks)
 
     downloadAlbum(resultLinks)  # Call download Album with all songs wanted
+    '''
 
 
 def downloadAlbum(givenArray):
