@@ -12,8 +12,8 @@ from moviepy.editor import *
 
 # Global Variables
 # ua = UserAgent()
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.13 (KHTML, like Gecko) Chrome/24.0.1290.1 Safari/537.13'}
+headers = {'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) '
+                          'AppleWebKit/537.13 (KHTML, like Gecko) Chrome/24.0.1290.1 Safari/537.13')}
 
 
 # Simple menu to choose between options
@@ -29,22 +29,29 @@ def optionSelect():
 
     3) Search Mode (Album)
     Search for an album. Recommended for albums with generic artist like "Various".
+    
+    9) Settings
+    Change the settings of the script.
 
     0) Exit
 
     ''')
 
-    if option == '1':
-        cacheMode()
-    elif option == '2':
-        searchMode(0)
-    elif option == '3':
-        searchMode(1)
-    elif option == '0':
-        sys.exit()
-    else:
-        print('Invalid option selected. Please try again.\n\n')
-        optionSelect()
+    match option:
+        case '1':
+            cacheMode()
+        case '2':
+            searchMode(0)
+        case '3':
+            searchMode(1)
+        case '9':
+            print("Not implemented yet, sorry")
+        case '0':
+            sys.exit()
+        case _:
+            print('Invalid option selected. Please try again.\n\n')
+
+    # TODO make this recursive when code's done  optionSelect() # Calls function again
 
 
 def cacheMode():
@@ -53,70 +60,74 @@ def cacheMode():
 
     # Find text file with links to google searches of albums' songs
     fileDir = input(
-        'Please enter the directory of the text file that has the links to appropriate files seperated by newlines.\n')
+        'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
 
     # Use readlines to seperate out the links of albums
     file = open(fileDir, 'r')
     resultArray = file.readlines()
     # Run downloadAlbum
-    downloadAlbum(resultArray)
+    # for item in resultArray:
+
+    # TODO: make conditional to check json if it's artist or album
+    downloadalbum(resultArray)
 
 
 def searchMode(mode):
-    resultCount = 0
-    resultLinks = []
+    # resultCount = 0
+    # resultLinks = []
     temp = ''
-
+    word = "artist"
+    if mode == 1:
+        word = "release"
     # Get input for a songwriter
-    artist = input('\nPlease input the name of the artist you want to search the discography of.\n\t')
-    searchLen = len(artist)
-    searchArtist = urllib.parse.quote_plus(artist) # Makes artist string OK for URLs
+    searchterm = input('\nPlease input the name of the ' + word + ' you want to search.\n\t')
+    # searchLen = len(searchterm)
+    urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
+
+    # discogs results scrape
+    query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word
+    try:
+        page = requests.get(query, headers=headers)  # Use requests on the new URL
+    except:
+        print('Error:')
+
+    match mode:
+        case 0:
+            print("artist mode not implemented, here's dmc5")
+            downloadalbum('https://www.discogs.com/master/1575693-Various-Devil-May-Cry-5-Original-Soundtrack')
+        case 1:
+            soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
+            divlist = soup.find_all('div',
+                                    {"class": "card_large"})  # Creates a list from all the divs that make up the cards
+            for div in divlist:  # Go through each div
+                if div.find('h4').find('a')['title'] == searchterm:  # compare input to card's title
+                    downloadalbum("https://discogs.com" + div.a["href"])  # Store first successful return then break
+                    break
 
 
+def downloadalbum(query):
+    blacklist = '.\'/\\'  # String of characters that cannot be in filenames
+    skippedList = []
 
-    '''
-    # discogs Google results scrape
-    query = 'https://www.google.com/search?q=discogs+' + searchArtist
-    page = ""
+    #  tryexcept for passed query
     try:
         page = requests.get(query, headers=headers)  # Use requests on the new URL
     except:
         print('Error:')
 
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
-    aList = soup.find_all('a', href=True)
-    for item in aList:
-        if item['href'][:30] == 'https://www.discogs.com/artist':
-            temp = item['href'] + '?type=Releases&subtype=Albums&filter_anv=0'
-            print('Going to page ' + temp + '...')
-            break  # Take the first viable link and then process it.
+    #  TODO get album art
+    coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the a tag of the cover preview
+    try:
+        coverart = requests.get(coverart.find('a')['href'])
+    except:
+        print('Error:')
 
-    # Find album name and find google results based on previous inputs & results
-    albumCheck = artist  # Create string to check against later
-    page = requests.get(temp, headers=headers)  # Use requests on the new URL
 
-    soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
-    imgList = soup.find_all('img', alt=True)  # Make array of img tags with alt
-    for item in imgList:
-        print('ping')
-        print(item['alt'][:searchLen])
-        print(artist)
-        if item['alt'][
-           :searchLen] == artist:  # Check alt text against artist String, only taking enough charcters to match
-            # Convert all info into one google search URL
-            temp = 'https://www.google.com/search?q=' + urllib.parse.quote_plus(
-                artist + ' ' + item['alt'][searchLen + 3:-10]) + '+songs'
-            resultLinks.append(temp)  # Add Link to array
-            print(resultLinks)
-
-    downloadAlbum(resultLinks)  # Call download Album with all songs wanted
+    #  TODO make song array
+    #  TODO download each song in the array
+    #  TODO save song as a json in history.txt
     '''
-
-
-def downloadAlbum(givenArray):
-    blacklist = '.\'/\\'  # String of characters that cannot be in filenames
-    skippedList = []
-    print('ping')
 
     # LEVEL: Processing google search links
     for link in givenArray:
@@ -145,7 +156,6 @@ def downloadAlbum(givenArray):
         # Get album and artist title to save as folder
         searchInput = soup.find('title')
         searchInput = searchInput.contents[0][:-22]
-
         # Ask user for input regarding the artist's name in the search
         infoList = searchInput.split()
         for item in infoList:
@@ -178,7 +188,7 @@ def downloadAlbum(givenArray):
                 print('\nSong name: ' + songName)
                 songIndex -= 1
                 # temp stores each song's google search video results
-                temp = 'https://www.google.com/search?q=' + urllib.parse.quote_plus(item) + '+' + link[32:] + '&tbm=vid'
+                temp = 'https://www.google.com/search?q=' + item.replace(" ", "+") + '+' + link[32:] + '&tbm=vid'
                 try:
                     page = requests.get(temp, headers=headers)  # Use requests on the new URL
                     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
@@ -262,6 +272,7 @@ def downloadAlbum(givenArray):
             for file in os.listdir('.\\'):
                 if file[-4:] == '.mp3':
                     shutil.move('.\\' + file, '.\\' + dirStorage + '\\' + file)
+'''
 
 
 # Converts given mp4 file into an mp3 file
