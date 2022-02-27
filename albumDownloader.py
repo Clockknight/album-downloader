@@ -6,6 +6,7 @@ import shutil
 import urllib
 import requests
 from pytube import YouTube
+from pytube import Search
 # from useragent import UserAgent
 from bs4 import BeautifulSoup
 from moviepy.editor import *
@@ -108,97 +109,108 @@ def searchMode(mode):
 def downloadalbum(query):
     blacklist = '.\'/\\'  # String of characters that cannot be in filenames
     skippedList = []
+    songnames = []
+    songtracks = []
+    songcount = 0
+    infoList = []
+    videoTitle = []
+    titleDict = {}
+    dirStorage = ''
+    searchInput = ''
+    artistIndex = 0
 
     #  tryexcept for passed query
     try:
         page = requests.get(query, headers=headers)  # Use requests on the new URL
     except:
         print('Error:')
+        return
 
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
+
+    albumname = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
+    artistname = albumname.find('a').text  # separate artist
+    albumname = albumname.text[len(artistname) + 3:]
+
     #  TODO get album art
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the a tag of the cover preview
     try:
         coverart = requests.get(coverart.find('a')['href'])
     except:
-        print('Error:')
+        print('Warning: Problem getting album art - ' + albumname)
 
+    # find table with class
+    # find tbody inside
+    table = soup.find('table', {"class": "tracklist_3QGRS"}).find("tbody").find_all('tr')
+    for tr in table:
+        tds = tr.find_all('td')
+        songtracks.append(tds[0].text)  # note 1st td as songtrack
+        songnames.append(tds[2].text)  # note 3rd td - span as song title
+        songcount += 1  # increment songcount var
 
-    #  TODO make song array
+    # Preparing directory to download song
+    dirstorage = artistname + ' - ' + albumname
+    os.makedirs(dirstorage, exist_ok=True)  # Make the folder
+    print('Creating folder:' + dirstorage)
+
+    #
+    # Codeblock to download array's songs
     #  TODO download each song in the array
-    #  TODO save song as a json in history.txt
-    '''
+    # Use album name + song name + "song" in youtube search
+    songcount = 0
+    for songname in songnames:
+        page = ('https://www.google.com/search?q=' + urllib.parse.quote_plus(albumname) + '+song+'
+                + urllib.parse.quote_plus(songname) + '&tbm=vid')
 
-    # LEVEL: Processing google search links
-    for link in givenArray:
-        # Refresh variables for each link
-        songNameList = []
-        songList = []
-        infoList = []
-        videoTitle = []
-        titleDict = {}
-        dirStorage = ''
-        searchInput = ''
-        artistName = ''
-        albumName = ''
-        songName = ''
-        songCount = 0
-        artistIndex = 0
-
-        # Process each link and grab song titles from the pages
         try:
-            page = requests.get(link, headers=headers)  # Use requests on the new URL
-            soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
-
+            page = requests.get(page, headers=headers)  # Use requests on the new URL
         except:
-            print('Failure to successfully get HTML info for page containing the album\'s songs!\nSkipping Album...')
+            print("Error: search for song on yt didn't work - " + songname)
+            continue
 
-        # Get album and artist title to save as folder
-        searchInput = soup.find('title')
-        searchInput = searchInput.contents[0][:-22]
-        # Ask user for input regarding the artist's name in the search
-        infoList = searchInput.split()
-        for item in infoList:
-            print(item)
+        search = Search(albumname + ' song ' + songname)
+        results = search.results
+        for video in results:
+            # TODO make it so the code compares songname to a regex the regex of the video title
+            # video title can be found with search.results[0].title
+            # Just assume it's the first video, should break
+            if True:
+                break
 
-        # Processing search query to find album and artist names
-        artistName = searchParse(infoList)
-        artistName = artistName.capitalize()
-        # Let user know about album info
-        print('Artist name: ' + artistName)
-        # Update infoList to exclude the artist name
-        for word in infoList[len(artistName.split()):]:
-            albumName += word.capitalize() + ' '
-        print('Album name: ' + albumName + '\n')
-        # Create folder based on album info
-        dirStorage = artistName + ' - ' + albumName
-        dirStorage = dirStorage[:-1]  # Remove whitespace at the end of the string
-        os.makedirs(dirStorage, exist_ok=True)  # Make the folder
-        print('Creating folder:' + dirStorage)
+        # TODO Code keeps breaking when trying to download
+        scrubname = songname
+        for char in blacklist:
+            scrubname = scrubname.replace(char, '')
 
-        divList = soup.find_all('div', {'class': 'title'})
-        for div in divList:
-            songList.append(div.contents[0])  # Refer to the first item of contents, since .contents returns an array
+        scrubname = os.path.join('.\\', scrubname + '.mp3')
+        try:
+            songcount += 1
+            video.streams.filter(only_audio=True).order_by("abr").first().download(filename=scrubname)
 
-            # LEVEL: Processing entire albums
-            # Process each song by appending the song title to the search
-            songIndex = songCount
-            for item in songList:
-                songName = item
-                print('\nSong name: ' + songName)
-                songIndex -= 1
-                # temp stores each song's google search video results
-                temp = 'https://www.google.com/search?q=' + item.replace(" ", "+") + '+' + link[32:] + '&tbm=vid'
-                try:
-                    page = requests.get(temp, headers=headers)  # Use requests on the new URL
-                    soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
+        except JSONDecodeError:
+            print('Warning: issue downloading song - ' + songname)
+            skippedList.append(dirstorage + songname)
+            continue
 
-                except:
-                    print(
-                        'Failure to successfully get HTML info for youtube result page for current song!\nShutting down...')
+        tagtarget = eyed3.load(scrubname)
+        tagtarget.tag.title = songname
+        tagtarget.tag.artist = artistname
+        tagtarget.tag.album = albumname
+        tagtarget.tag.album_artist = artistname
+        tagtarget.tag.track_num = songtracks[songcount]
+        # TODO Implement adding album art
+        tagtarget.tag.save()
 
-                # Look for links in search results
-                aList = soup.find_all('a', href=True)
+    # Move all mp3s in the current working directory to the album folder
+    for file in os.listdir('.\\'):
+        if file[-4:] == '.mp3':
+            shutil.move('.\\' + file, '.\\' + dirstorage + '\\' + file)
+
+    #  TODO save song as a json in history.txt
+
+
+'''
+useful code snippet for checking results
 
                 # LEVEL: Processing results for each song
                 for a in aList:
@@ -236,57 +248,10 @@ def downloadalbum(query):
                                 'Saved as: ' + songName)  # Print the title of the video for the user to know what files to look for.
                             temp = a['href']
 
-                            scrubbedName = songName
-                            for char in blacklist:
-                                scrubbedName = scrubbedName.replace(char, '')
-
-                            # TODO Add try except case for json.decoder.JSONDecodeError
-                            try:
-                                songCount += 1
-                                YouTube(temp).streams.first().download(filename=scrubbedName)
-
-                            except JSONDecodeError:
-                                print('Song download error! Skipped song: ' + songName)
-                                skippedList.append(dirStorage + songName)
-                                pass
-
-                            # Create versions of the variables with blacklisted characters removed
-                            targetFile = os.path.join('.\\', scrubbedName + '.mp4')
-
-                            # Change file into an mp3
-                            targetFile = convertFile(targetFile)
-                            print(targetFile)
-
-                            tagTarget = eyed3.load(targetFile)
-                            tagTarget.tag.title = songName
-                            tagTarget.tag.artist = artistName
-                            tagTarget.tag.album = albumName
-                            tagTarget.tag.album_artist = artistName
-                            tagTarget.tag.track_num = songCount
-                            # TODO Implement adding album art
-                            tagTarget.tag.save()
-
-                            break  # Move onto processing next song
-
-            # Move all mp3s in the current working directory to the album folder
-            for file in os.listdir('.\\'):
-                if file[-4:] == '.mp3':
-                    shutil.move('.\\' + file, '.\\' + dirStorage + '\\' + file)
+            
 '''
 
 
-# Converts given mp4 file into an mp3 file
-def convertFile(givenFile):
-    resultFile = givenFile[:-1] + '3'
-
-    givenMp4 = VideoFileClip(givenFile)
-    audioMp4 = givenMp4.audio
-    audioMp4.write_audiofile(resultFile)
-    givenMp4.close()
-    audioMp4.close()
-    os.remove(givenFile)
-
-    return resultFile
 
 
 # Returns path to mp3 file
