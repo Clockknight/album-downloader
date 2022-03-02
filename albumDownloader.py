@@ -1,22 +1,15 @@
 import time
 from json import JSONDecodeError
 import eyed3
-from eyed3 import mp3
-import shutil
 import urllib
 import requests
 from pytube import Search
-# from useragent import UserAgent
 from bs4 import BeautifulSoup
 from moviepy.editor import *
+import ssl
+ssl._create_default_https_context = ssl._create_stdlib_context
 
-# Global Variables
-# ua = UserAgent()
-headers = {'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) '
-                          'AppleWebKit/537.13 (KHTML, like Gecko) Chrome/24.0.1290.1 Safari/537.13')}
-
-
-# Simple menu to choose between options
+# Text based menu to choose between options
 def optionSelect():
     option = input('''
     Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
@@ -80,7 +73,7 @@ def searchMode(mode):
     # discogs results scrape
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word
     try:
-        page = requests.get(query, headers=headers)  # Use requests on the new URL
+        page = requests.get(query)  # Use requests on the new URL
     except:
         print('Error:')
 
@@ -144,14 +137,6 @@ def downloadalbum(query):
     songcount = 0
     for songname in songnames:
         print('\t\tDownloading - ' + songname)
-        page = ('https://www.google.com/search?q=' + urllib.parse.quote_plus(albumname) + '+song+'
-                + urllib.parse.quote_plus(songname) + '&tbm=vid')
-
-        try:
-            page = requests.get(page, headers=headers)  # Use requests on the new URL
-        except:
-            print("Error: search for song on yt didn't work - " + songname)
-            continue
 
         search = Search(albumname + ' song ' + songname)
         results = search.results
@@ -167,7 +152,7 @@ def downloadalbum(query):
         for char in blacklist:
             cleanname = cleanname.replace(char, '')
 
-        cleanname = os.path.abspath(os.path.join('.\\', dirstorage, cleanname + '.mp4'))
+        cleanname = os.path.abspath(os.path.join( dirstorage, cleanname + '.mp4'))
         songcount += 1
         try:
             # Block is heavy in terms of process time, but only way to write downloaded youtube videos into taggable
@@ -265,5 +250,8 @@ def searchParse(searchTerms):
 
         return confirmedString
 
+# Defining headers for user agent
+headers = {'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) '
+                          'AppleWebKit/537.13 (KHTML, like Gecko) Chrome/24.0.1290.1 Safari/537.13')}
 
 optionSelect()
