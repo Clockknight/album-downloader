@@ -1,11 +1,10 @@
-# import os
-# import sys
+import time
 from json import JSONDecodeError
 import eyed3
+from eyed3 import mp3
 import shutil
 import urllib
 import requests
-from pytube import YouTube
 from pytube import Search
 # from useragent import UserAgent
 from bs4 import BeautifulSoup
@@ -56,16 +55,12 @@ def optionSelect():
 
 
 def cacheMode():
-    fileDir = ''
-    resultArray = []
-
     # Find text file with links to google searches of albums' songs
     fileDir = input(
         'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
 
     # Use readlines to seperate out the links of albums
-    file = open(fileDir, 'r')
-    resultArray = file.readlines()
+    resultArray = open(fileDir, 'r').readlines()
     # Run downloadAlbum
     # for item in resultArray:
 
@@ -74,9 +69,6 @@ def cacheMode():
 
 
 def searchMode(mode):
-    # resultCount = 0
-    # resultLinks = []
-    temp = ''
     word = "artist"
     if mode == 1:
         word = "release"
@@ -106,18 +98,12 @@ def searchMode(mode):
                     break
 
 
+#
 def downloadalbum(query):
-    blacklist = '.\'/\\'  # String of characters that cannot be in filenames
+    blacklist = '.\'/\\\"'  # String of characters that cannot be in filenames
     skippedList = []
     songnames = []
-    songtracks = []
     songcount = 0
-    infoList = []
-    videoTitle = []
-    titleDict = {}
-    dirStorage = ''
-    searchInput = ''
-    artistIndex = 0
 
     #  tryexcept for passed query
     try:
@@ -132,6 +118,7 @@ def downloadalbum(query):
     artistname = albumname.find('a').text  # separate artist
     albumname = albumname.text[len(artistname) + 3:]
 
+    print('\tDownloading - ' + albumname)
     #  TODO get album art
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the a tag of the cover preview
     try:
@@ -139,12 +126,10 @@ def downloadalbum(query):
     except:
         print('Warning: Problem getting album art - ' + albumname)
 
-    # find table with class
-    # find tbody inside
+    # find table with class, tbody inside
     table = soup.find('table', {"class": "tracklist_3QGRS"}).find("tbody").find_all('tr')
     for tr in table:
         tds = tr.find_all('td')
-        songtracks.append(tds[0].text)  # note 1st td as songtrack
         songnames.append(tds[2].text)  # note 3rd td - span as song title
         songcount += 1  # increment songcount var
 
@@ -155,10 +140,10 @@ def downloadalbum(query):
 
     #
     # Codeblock to download array's songs
-    #  TODO download each song in the array
     # Use album name + song name + "song" in youtube search
     songcount = 0
     for songname in songnames:
+        print('\t\tDownloading - ' + songname)
         page = ('https://www.google.com/search?q=' + urllib.parse.quote_plus(albumname) + '+song+'
                 + urllib.parse.quote_plus(songname) + '&tbm=vid')
 
@@ -178,35 +163,44 @@ def downloadalbum(query):
                 break
 
         # TODO Code keeps breaking when trying to download
-        scrubname = songname
+        cleanname = songname
         for char in blacklist:
-            scrubname = scrubname.replace(char, '')
+            cleanname = cleanname.replace(char, '')
 
-        scrubname = os.path.join('.\\', scrubname + '.mp3')
+        cleanname = os.path.abspath(os.path.join('.\\', dirstorage, cleanname + '.mp4'))
+        songcount += 1
         try:
-            songcount += 1
-            video.streams.filter(only_audio=True).order_by("abr").first().download(filename=scrubname)
+            # Block is heavy in terms of process time, but only way to write downloaded youtube videos into taggable
+            # mp3 files
+            # video becomes youtube Object
+            video = video.streams.filter(mime_type="audio/mp4").order_by("abr").desc().first()
+            video.download(filename=cleanname)
+            clip = AudioFileClip(cleanname)
+            video = cleanname  # reassign video to path to mp4
+            cleanname = cleanname[:-1] + '3'
+            clip.write_audiofile(cleanname)
+
+            while not os.path.exists(cleanname):
+                time.sleep(1)
+
+            os.remove(video)
 
         except JSONDecodeError:
             print('Warning: issue downloading song - ' + songname)
             skippedList.append(dirstorage + songname)
             continue
 
-        tagtarget = eyed3.load(scrubname)
-        tagtarget.tag.title = songname
-        tagtarget.tag.artist = artistname
-        tagtarget.tag.album = albumname
-        tagtarget.tag.album_artist = artistname
-        tagtarget.tag.track_num = songtracks[songcount]
-        # TODO Implement adding album art
-        tagtarget.tag.save()
+        # TODO Implement adding album art to the eyed3 object
+        tagtarget = eyed3.load(cleanname)  # creates mp3audiofile at downloaded mp3
+        tagtarget = tagtarget.tag
+        tagtarget.title = songname
+        tagtarget.artist = artistname
+        tagtarget.album_artist = artistname
+        tagtarget.album = albumname
+        tagtarget.track_num = (songcount, len(songnames))
+        tagtarget.save(cleanname)
 
-    # Move all mp3s in the current working directory to the album folder
-    for file in os.listdir('.\\'):
-        if file[-4:] == '.mp3':
-            shutil.move('.\\' + file, '.\\' + dirstorage + '\\' + file)
-
-    #  TODO save song as a json in history.txt
+    # TODO Save album or add it to artist in history.txt
 
 
 '''
@@ -251,10 +245,6 @@ useful code snippet for checking results
             
 '''
 
-
-
-
-# Returns path to mp3 file
 
 # Takes list of words from search, returns words that should be the artist's name
 def searchParse(searchTerms):
