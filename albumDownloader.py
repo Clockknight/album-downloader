@@ -7,7 +7,9 @@ from pytube import Search
 from bs4 import BeautifulSoup
 from moviepy.editor import *
 import ssl
+
 ssl._create_default_https_context = ssl._create_stdlib_context
+
 
 # Text based menu to choose between options
 def optionSelect():
@@ -95,6 +97,7 @@ def searchMode(mode):
 def downloadalbum(query):
     blacklist = '.\'/\\\"'  # String of characters that cannot be in filenames
     skippedList = []
+    blacklist = ['Original', 'Soundtrack']
     songnames = []
     songcount = 0
 
@@ -113,7 +116,7 @@ def downloadalbum(query):
 
     print('\tDownloading - ' + albumname)
     #  TODO get album art
-    coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the a tag of the cover preview
+    coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
     try:
         coverart = requests.get(coverart.find('a')['href'])
     except:
@@ -131,20 +134,29 @@ def downloadalbum(query):
     os.makedirs(dirstorage, exist_ok=True)  # Make the folder
     print('Creating folder:' + dirstorage)
 
-    #
     # Codeblock to download array's songs
     # Use album name + song name + "song" in youtube search
     songcount = 0
     for songname in songnames:
         print('\t\tDownloading - ' + songname)
 
-        search = Search(albumname + ' song ' + songname)
-        results = search.results
+        results = Search(albumname + ' song ' + songname).results
         for video in results:
             # TODO make it so the code compares songname to a regex the regex of the video title
-            # video title can be found with search.results[0].title
-            # Just assume it's the first video, should break
-            if True:
+            check = True
+            videoname = video.title.split()
+            for word in albumname.split():  # This should iterate through each word in the name of the album
+                # Check if word exists. Also check if word is long enough
+                if word not in videoname and len(word) > 3:
+                    check = False
+                    break
+            if not check: continue
+
+            for word in songname.split():  # this check works the same as above, just for the song name
+                if word not in videoname:
+                    check = False
+                    break
+            if check:
                 break
 
         # TODO Code keeps breaking when trying to download
@@ -152,7 +164,7 @@ def downloadalbum(query):
         for char in blacklist:
             cleanname = cleanname.replace(char, '')
 
-        cleanname = os.path.abspath(os.path.join( dirstorage, cleanname + '.mp4'))
+        cleanname = os.path.abspath(os.path.join(dirstorage, cleanname + '.mp4'))
         songcount += 1
         try:
             # Block is heavy in terms of process time, but only way to write downloaded youtube videos into taggable
@@ -249,6 +261,7 @@ def searchParse(searchTerms):
                     confirmedString += (str(searchTerms[i])) + ' '
 
         return confirmedString
+
 
 # Defining headers for user agent
 headers = {'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) '
