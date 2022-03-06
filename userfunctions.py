@@ -11,11 +11,6 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_stdlib_context
 
-''' Defining headers for user agent
-headers = {'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) '
-                          'AppleWebKit/537.13 (KHTML, like Gecko) Chrome/24.0.1290.1 Safari/537.13')}
-'''
-
 
 # Text based menu to choose between options
 def optionSelect():
@@ -54,7 +49,8 @@ def optionSelect():
 
     optionSelect()  # Calls function again
 
-
+# TODO implement cacheMode
+# needs to refer to history.txt, and then run
 def cacheMode():
     # Find text file with links to google searches of albums' songs
     fileDir = input(
@@ -73,20 +69,21 @@ def searchinput(mode):
     word = "artist"
     if mode == 1:
         word = "release"
-    # Get input for a songwriter
+    # Get input for artist/album name
     searchterm = input('\nPlease input the name of the ' + word + ' you want to search.\n\t')
-    searchprocess(word, searchterm)
+    searchprocess(word, searchterm) # call helper function
 
 
 def searchprocess(word, searchterm):
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
-    query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word
+    query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word # makes url to search for results
 
     try:
         page = requests.get(query)  # Use requests on the new URL
     except:
         print('Error:')
 
+    # Codeblock to try and find albums based on mode provided
     match word:
         case 'artist':
             print("artist mode not implemented, here's dmc5")
@@ -112,35 +109,36 @@ def downloadalbum(query):
     try:
         page = requests.get(query)  # Use requests on the new URL
     except:
-        print('Error:')
+        print('Error: failure processing album. Link provided - ' + query)
         return
 
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
 
     albumname = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artistname = albumname.find('a').text  # separate artist
-    albumname = albumname.text[len(artistname) + 3:]
+    albumname = albumname.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
     print('\tDownloading - ' + albumname)
-    #  TODO get album art
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
     try:
+        # TODO actually implement a way to get the album art from the discogs page
         coverart = requests.get(coverart.find('a')['href'])
     except:
-        print('Warning: Problem getting album art - ' + albumname)
+        print('Warning: Problem getting album art - ' + albumname)  # Let the user know the album art isn't available
+        coverart = 'fail' # set it to fail for mp3 tag check
 
     # find table with class, tbody inside
-    table = soup.find('table', {"class": "tracklist_3QGRS"}).find("tbody").find_all('tr')
+    table = soup.find('table', {"class": "tracklist_3QGRS"}).find("tbody").find_all('tr') # find table with songs
     for tr in table:
-        tds = tr.find_all('td')
+        tds = tr.find_all('td')  # find tds (columns) inside tr
         songnames.append(tds[2].text)  # note 3rd td - span as song title
 
     # Preparing directory to download song
-    dirstorage = artistname + ' - ' + albumname
+    dirstorage = artistname + ' - ' + albumname  # create folder that
     os.makedirs(dirstorage, exist_ok=True)  # Make the folder
     print('Creating folder:' + dirstorage)
 
-    # Codeblock to download array's songs
+    # mega Codeblock to download array's songs
     # Use album name + song name + "song" in youtube search
     for songname in songnames:
         print('\t\tDownloading - ' + songname)
@@ -149,60 +147,58 @@ def downloadalbum(query):
         loop = len(results)  # variable to track how many videos are past
         check = False
 
-        for video in results:
+        for video in results:  # Go through videos pulled
             loop -= 1
-            if video.length < 15 * 60:
+            if video.length < 15 * 60:  # only filter in place is making sure the video is at least 15 min
                 check = True
-                break
+                break  # break out of check
 
-        # Extra check, just in case none of the results on the first results gotten are good
+        # check, catches if no videos in first results are
         if not check and loop == 0:
             # TODO make it so code tries the loop again with results.nextresults (sic)
-            print('Warning: No result found within parameters - ' + songname)
-            skippedList.append(songname)
+            print('Warning: No result found within parameters - ' + songname)  # let user know about this
+            skippedList.append(songname)  # put it on the skipped songs
             continue  # move onto next songname in this case
 
         # TODO Code keeps breaking when trying to download
         cleanname = songname
         for char in blacklist:
-            cleanname = cleanname.replace(char, '')
+            cleanname = cleanname.replace(char, '')  # remove chars that will mess up processing below
 
-        cleanname = os.path.abspath(os.path.join(dirstorage, cleanname + '.mp4'))
-        songcount += 1
+        cleanname = os.path.abspath(os.path.join(dirstorage, cleanname + '.mp4'))  # cleanname is directory of mp4
+        songcount += 1  # increment songcount once song is found, before downloading it
         try:
-            # Block is heavy in terms of process time, but only way to write downloaded youtube videos into taggable
-            # mp3 files
-            # video becomes youtube Object
+            # Block is heavy in terms of process time, but only way to write downloaded youtube videos into taggables
+            # if possible, a way to download a mp3 directly would be useful
             video = video.streams.filter(mime_type="audio/mp4").order_by("abr").desc().first()
-            video.download(filename=cleanname)
+            video.download(filename=cleanname)  # download video as mp4
             while not os.path.exists(cleanname):
                 time.sleep(1)  # Wait until mp4 is downloaded
-            clip = AudioFileClip(cleanname)
+            clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
             video = cleanname  # reassign video to path to mp4
-            cleanname = cleanname[:-1] + '3'
-            clip.write_audiofile(cleanname)
+            cleanname = cleanname[:-1] + '3'  # change where cleanname points
+            clip.write_audiofile(cleanname)  # write audio to an mp3 file
 
-            os.remove(video)
+            os.remove(video)  # delete old mp4
 
-        except:
+        except:  # Skip to next song if above block raises an error
             print('Warning: issue downloading from YouTube - ' + songname)
             skippedList.append(songname)
             continue
 
         # TODO Implement adding album art to the eyed3 object
-
         tagtarget = eyed3.load(cleanname)  # creates mp3audiofile at downloaded mp3
         tagtarget = tagtarget.tag
         tagtarget.title = songname
         tagtarget.artist = artistname
         tagtarget.album_artist = artistname
         tagtarget.album = albumname
-        # TODO remove hardcoded url
-        coverart = 'https://upload.wikimedia.org/wikipedia/en/c/cb/Devil_May_Cry_5.jpg'
-        coverart = urllib.request.urlopen(coverart)
-        coverart = coverart.read()
-        tagtarget.images.set(3, coverart, "image/jpeg")
         tagtarget.track_num = (songcount, len(songnames))
+        if coverart is not 'fail':  # Check if coverart is actually
+            coverart = urllib.request.urlopen(coverart)
+            coverart = coverart.read()
+            tagtarget.images.set(3, coverart, "image/jpeg")
+
         tagtarget.save(cleanname)
 
         # TODO Save album or add it to artist in history.txt
