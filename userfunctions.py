@@ -3,12 +3,18 @@ from json import JSONDecodeError
 import eyed3
 import urllib
 import requests
+from urllib import request
 from pytube import Search
 from bs4 import BeautifulSoup
 from moviepy.editor import *
 import ssl
 
 ssl._create_default_https_context = ssl._create_stdlib_context
+
+''' Defining headers for user agent
+headers = {'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) '
+                          'AppleWebKit/537.13 (KHTML, like Gecko) Chrome/24.0.1290.1 Safari/537.13')}
+'''
 
 
 # Text based menu to choose between options
@@ -36,9 +42,9 @@ def optionSelect():
         case '1':
             cacheMode()
         case '2':
-            searchMode(0)
+            searchinput(0)
         case '3':
-            searchMode(1)
+            searchinput(1)
         case '9':
             print("Not implemented yet, sorry")
         case '0':
@@ -46,7 +52,7 @@ def optionSelect():
         case _:
             print('Invalid option selected. Please try again.\n\n')
 
-    # TODO make this recursive when code's done  optionSelect() # Calls function again
+    optionSelect()  # Calls function again
 
 
 def cacheMode():
@@ -63,27 +69,29 @@ def cacheMode():
     downloadalbum(resultArray)
 
 
-def searchMode(mode):
+def searchinput(mode):
     word = "artist"
     if mode == 1:
         word = "release"
     # Get input for a songwriter
     searchterm = input('\nPlease input the name of the ' + word + ' you want to search.\n\t')
-    # searchLen = len(searchterm)
-    urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
+    searchprocess(word, searchterm)
 
-    # discogs results scrape
+
+def searchprocess(word, searchterm):
+    urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word
+
     try:
         page = requests.get(query)  # Use requests on the new URL
     except:
         print('Error:')
 
-    match mode:
-        case 0:
+    match word:
+        case 'artist':
             print("artist mode not implemented, here's dmc5")
             downloadalbum('https://www.discogs.com/master/1575693-Various-Devil-May-Cry-5-Original-Soundtrack')
-        case 1:
+        case 'release':
             soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
             divlist = soup.find_all('div',
                                     {"class": "card_large"})  # Creates a list from all the divs that make up the cards
@@ -93,17 +101,16 @@ def searchMode(mode):
                     break
 
 
-#
 def downloadalbum(query):
     blacklist = '.\'/\\\"'  # String of characters that cannot be in filenames
     skippedList = []
-    blacklist = ['Original', 'Soundtrack']
+    blacklistwords = ['Original', 'Soundtrack']
     songnames = []
     songcount = 0
 
     #  tryexcept for passed query
     try:
-        page = requests.get(query, headers=headers)  # Use requests on the new URL
+        page = requests.get(query)  # Use requests on the new URL
     except:
         print('Error:')
         return
@@ -127,7 +134,6 @@ def downloadalbum(query):
     for tr in table:
         tds = tr.find_all('td')
         songnames.append(tds[2].text)  # note 3rd td - span as song title
-        songcount += 1  # increment songcount var
 
     # Preparing directory to download song
     dirstorage = artistname + ' - ' + albumname
@@ -136,28 +142,25 @@ def downloadalbum(query):
 
     # Codeblock to download array's songs
     # Use album name + song name + "song" in youtube search
-    songcount = 0
     for songname in songnames:
         print('\t\tDownloading - ' + songname)
 
         results = Search(albumname + ' song ' + songname).results
-        for video in results:
-            # TODO make it so the code compares songname to a regex the regex of the video title
-            check = True
-            videoname = video.title.split()
-            for word in albumname.split():  # This should iterate through each word in the name of the album
-                # Check if word exists. Also check if word is long enough
-                if word not in videoname and len(word) > 3:
-                    check = False
-                    break
-            if not check: continue
+        loop = len(results)  # variable to track how many videos are past
+        check = False
 
-            for word in songname.split():  # this check works the same as above, just for the song name
-                if word not in videoname:
-                    check = False
-                    break
-            if check:
+        for video in results:
+            loop -= 1
+            if video.length < 15 * 60:
+                check = True
                 break
+
+        # Extra check, just in case none of the results on the first results gotten are good
+        if not check and loop == 0:
+            # TODO make it so code tries the loop again with results.nextresults (sic)
+            print('Warning: No result found within parameters - ' + songname)
+            skippedList.append(songname)
+            continue  # move onto next songname in this case
 
         # TODO Code keeps breaking when trying to download
         cleanname = songname
@@ -172,32 +175,37 @@ def downloadalbum(query):
             # video becomes youtube Object
             video = video.streams.filter(mime_type="audio/mp4").order_by("abr").desc().first()
             video.download(filename=cleanname)
+            while not os.path.exists(cleanname):
+                time.sleep(1)  # Wait until mp4 is downloaded
             clip = AudioFileClip(cleanname)
             video = cleanname  # reassign video to path to mp4
             cleanname = cleanname[:-1] + '3'
             clip.write_audiofile(cleanname)
 
-            while not os.path.exists(cleanname):
-                time.sleep(1)
-
             os.remove(video)
 
-        except JSONDecodeError:
-            print('Warning: issue downloading song - ' + songname)
-            skippedList.append(dirstorage + songname)
+        except:
+            print('Warning: issue downloading from YouTube - ' + songname)
+            skippedList.append(songname)
             continue
 
         # TODO Implement adding album art to the eyed3 object
+
         tagtarget = eyed3.load(cleanname)  # creates mp3audiofile at downloaded mp3
         tagtarget = tagtarget.tag
         tagtarget.title = songname
         tagtarget.artist = artistname
         tagtarget.album_artist = artistname
         tagtarget.album = albumname
+        # TODO remove hardcoded url
+        coverart = 'https://upload.wikimedia.org/wikipedia/en/c/cb/Devil_May_Cry_5.jpg'
+        coverart = urllib.request.urlopen(coverart)
+        coverart = coverart.read()
+        tagtarget.images.set(3, coverart, "image/jpeg")
         tagtarget.track_num = (songcount, len(songnames))
         tagtarget.save(cleanname)
 
-    # TODO Save album or add it to artist in history.txt
+        # TODO Save album or add it to artist in history.txt
 
 
 '''
@@ -242,6 +250,34 @@ useful code snippet for checking results
             
 '''
 
+# TODO update the code so the filter below works
+
+'''Below is a currently unused filter. It only accepted videos if they had every word in the video title
+videoname = video.title.split()
+
+for i in range(0, len(videoname)):
+    videoname[i] = videoname[i].lower()
+
+for word in albumname.split():  # This should iterate through each word in the name of the album
+    # Check if word exists. Also check if word is long enough
+    word = word.lower()
+    if word not in videoname and len(word) > 3:
+        check = False
+        break
+
+if not check: continue
+
+for word in songname.split():  # this check works the same as above, just for the song name
+    word = word.lower()
+    if word not in videoname:
+        check = False
+        break  # No point in checking the rest of the words
+
+if check: break  # If a video gets past all the filters, then it moves on'''
+
+
+# def downloadsong(songname):
+
 
 # Takes list of words from search, returns words that should be the artist's name
 def searchParse(searchTerms):
@@ -261,10 +297,3 @@ def searchParse(searchTerms):
                     confirmedString += (str(searchTerms[i])) + ' '
 
         return confirmedString
-
-
-# Defining headers for user agent
-headers = {'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) '
-                          'AppleWebKit/537.13 (KHTML, like Gecko) Chrome/24.0.1290.1 Safari/537.13')}
-
-optionSelect()
