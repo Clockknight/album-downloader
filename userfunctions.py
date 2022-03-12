@@ -293,3 +293,4 @@ def searchParse(searchTerms):
                     confirmedString += (str(searchTerms[i])) + ' '
 
         return confirmedString
+        

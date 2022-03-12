@@ -25,6 +25,8 @@ Various - Devil May Cry 5 - Original Soundtrack/**
 **/.idea/**/contentModel.xml
 **/.idea/**/modules.xml
 
+local_temp_notes.txt
+
 *.suo
 *.user
 .vs/
