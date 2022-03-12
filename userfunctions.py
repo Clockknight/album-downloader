@@ -194,7 +194,7 @@ def downloadalbum(query):
         tagtarget.album_artist = artistname
         tagtarget.album = albumname
         tagtarget.track_num = (songcount, len(songnames))
-        if coverart is not 'fail':  # Check if coverart is actually
+        if coverart != 'fail':  # Check if coverart is actually
             coverart = urllib.request.urlopen(coverart)
             coverart = coverart.read()
             tagtarget.images.set(3, coverart, "image/jpeg")
