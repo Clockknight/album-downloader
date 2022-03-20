@@ -9,6 +9,7 @@ Various - Devil May Cry 5 - Original Soundtrack/**
 **/.idea/shelf/*
 **/.idea/dictionaries
 **/.idea/httpRequests/
+**/__pycache__/**
 
 # Sensitive or high-churn files
 **/.idea/**/dataSources/
@@ -23,6 +24,8 @@ Various - Devil May Cry 5 - Original Soundtrack/**
 **/.idea/**/*.iml
 **/.idea/**/contentModel.xml
 **/.idea/**/modules.xml
+
+local_temp_notes.txt
 
 *.suo
 *.user
