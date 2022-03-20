@@ -21,7 +21,7 @@ def optionSelect():
     Provide a .txt file with links to album's google result pages, seperated by lines.
 
     2) Search Mode (Artist)
-    Search for an artist's discography. Results will be stored in the 
+    Search for an artist's discography. The artist's discography will be stored in history.json
 
     3) Search Mode (Album)
     Search for an album. Recommended for albums with generic artist like "Various".
@@ -50,7 +50,7 @@ def optionSelect():
     optionSelect()  # Calls function again
 
 # TODO implement cacheMode
-# needs to refer to history.txt, and then run
+# needs to refer to clockknight want.txt, and then run
 def cacheMode():
     # Find text file with links to google searches of albums' songs
     fileDir = input(
@@ -201,7 +201,7 @@ def downloadalbum(query):
 
         tagtarget.save(cleanname)
 
-        # TODO Save album or add it to artist in history.txt
+        # TODO Save album or add it to artist in clockknight want.txt
 
 
 '''
