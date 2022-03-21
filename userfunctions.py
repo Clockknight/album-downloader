@@ -1,5 +1,3 @@
-import time
-from json import JSONDecodeError
 import eyed3
 import urllib
 import requests
