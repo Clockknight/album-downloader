@@ -1,10 +1,12 @@
 import eyed3
 import urllib
+import pytube
 import requests
 from urllib import request
 from pytube import Search
 from bs4 import BeautifulSoup
 from moviepy.editor import *
+from pytube import YouTube
 import ssl
 
 ssl._create_default_https_context = ssl._create_stdlib_context
@@ -13,21 +15,24 @@ ssl._create_default_https_context = ssl._create_stdlib_context
 # Text based menu to choose between options
 def optionSelect():
     option = input('''
-    Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
+Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
 
-    1) Cache Mode
-    Provide a .txt file with links to album's google result pages, seperated by lines.
+1) Cache Mode
+Provide a .txt file with links to album's google result pages, seperated by lines.
 
-    2) Search Mode (Artist)
-    Search for an artist's discography. The artist's discography will be stored in history.json
+2) Search Mode (Artist)
+Search for an artist's discography. The artist's discography will be stored in history.json
 
-    3) Search Mode (Album)
-    Search for an album. Recommended for albums with generic artist like "Various".
-    
-    9) Settings
-    Change the settings of the script.
+3) Search Mode (Album)
+Search for an album. Recommended for albums with generic artist like "Various".
 
-    0) Exit
+8) URL Mode
+Paste in a URL, and the program will do it's best to parse the information.
+
+9) Settings
+Change the settings of the script.
+
+0) Exit
 
     ''')
 
@@ -38,6 +43,8 @@ def optionSelect():
             searchinput(0)
         case '3':
             searchinput(1)
+        case '8':
+            urlinput()
         case '9':
             print("Not implemented yet, sorry")
         case '0':
@@ -46,6 +53,7 @@ def optionSelect():
             print('Invalid option selected. Please try again.\n\n')
 
     optionSelect()  # Calls function again
+
 
 # TODO implement cacheMode
 # needs to refer to clockknight want.txt, and then run
@@ -65,16 +73,48 @@ def cacheMode():
 
 def searchinput(mode):
     word = "artist"
-    if mode == 1:
-        word = "release"
+    match mode:
+        case '1':
+            word = "release"
     # Get input for artist/album name
-    searchterm = input('\nPlease input the name of the ' + word + ' you want to search.\n\t')
-    searchprocess(word, searchterm) # call helper function
+    searchterm = input('\nPlease input the name of the ' + word + ' you want to search for.\n\t')
+    searchprocess(word, searchterm)  # call helper function
+
+
+def urlinput():
+    dirstorage = "URL Downloads"
+    os.makedirs(dirstorage, exist_ok=True)  # Make the folder
+
+    url = input('\nPlease input the url of the video you want to download.\n\t')
+    # download the video as mp3
+    # TODO: brainstorm way to get artist and song title somehow?
+    # for now just give up and just download basic mp3
+    try:
+        video = YouTube(url)
+        video = video.streams.filter(mime_type="audio/mp4").order_by("abr").desc().first()
+        title = video.title
+        cleanname = os.path.abspath(os.path.join(dirstorage, title + '.mp4'))
+        video.download(filename=cleanname)
+
+        # TODO: Create function to make folder
+        # TODO: Make this code block (also in the album download function) a helper function instead
+        clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
+        video = cleanname  # reassign video to path to mp4
+        cleanname = cleanname[:-1] + '3'  # change where cleanname points
+        clip.write_audiofile(cleanname)  # write audio to an mp3 file
+        os.remove(video)  # delete old mp4
+    except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
+        input("Invalid URL. Press Enter to return to the main menu.")
+        optionSelect()
+    except:
+        input("Invalid URL. Press Enter to return to the main menu.")
+        optionSelect()
+
 
 
 def searchprocess(word, searchterm):
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
-    query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word # makes url to search for results
+    query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word  # makes url to search for results
 
     try:
         page = requests.get(query)  # Use requests on the new URL
@@ -123,10 +163,10 @@ def downloadalbum(query):
         coverart = requests.get(coverart.find('a')['href'])
     except:
         print('Warning: Problem getting album art - ' + albumname)  # Let the user know the album art isn't available
-        coverart = 'fail' # set it to fail for mp3 tag check
+        coverart = 'fail'  # set it to fail for mp3 tag check
 
     # find table with class, tbody inside
-    table = soup.find('table', {"class": "tracklist_3QGRS"}).find("tbody").find_all('tr') # find table with songs
+    table = soup.find('table', {"class": "tracklist_3QGRS"}).find("tbody").find_all('tr')  # find table with songs
     for tr in table:
         tds = tr.find_all('td')  # find tds (columns) inside tr
         songnames.append(tds[2].text)  # note 3rd td - span as song title
@@ -170,8 +210,6 @@ def downloadalbum(query):
             # if possible, a way to download a mp3 directly would be useful
             video = video.streams.filter(mime_type="audio/mp4").order_by("abr").desc().first()
             video.download(filename=cleanname)  # download video as mp4
-            while not os.path.exists(cleanname):
-                time.sleep(1)  # Wait until mp4 is downloaded
             clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
             video = cleanname  # reassign video to path to mp4
             cleanname = cleanname[:-1] + '3'  # change where cleanname points
@@ -291,4 +329,3 @@ def searchParse(searchTerms):
                     confirmedString += (str(searchTerms[i])) + ' '
 
         return confirmedString
-        
