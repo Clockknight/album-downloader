@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from moviepy.editor import *
 from pytube import YouTube
 import ssl
+import re
 
 ssl._create_default_https_context = ssl._create_stdlib_context
 
@@ -73,9 +74,8 @@ def cacheMode():
 
 def searchinput(mode):
     word = "artist"
-    match mode:
-        case '1':
-            word = "release"
+    if mode == '1':
+        word = "release"
     # Get input for artist/album name
     searchterm = input('\nPlease input the name of the ' + word + ' you want to search for.\n\t')
     searchprocess(word, searchterm)  # call helper function
@@ -165,11 +165,16 @@ def downloadalbum(query):
         print('Warning: Problem getting album art - ' + albumname)  # Let the user know the album art isn't available
         coverart = 'fail'  # set it to fail for mp3 tag check
 
+    # TODO: Make this a function, give input of a array then append stuff inside it
     # find table with class, tbody inside
-    table = soup.find('table', {"class": "tracklist_3QGRS"}).find("tbody").find_all('tr')  # find table with songs
+    table = soup.find("table", {"class":"tracklist_4KOvL"})
+    table = table.find("tbody").find_all('tr')  # find table with songs
     for tr in table:
         tds = tr.find_all('td')  # find tds (columns) inside tr
-        songnames.append(tds[2].text)  # note 3rd td - span as song title
+        tds = tds[2]
+        span = tds.find("span")
+        result = span.text
+        songnames.append(result)  # note 3rd td - span as song title
 
     # Preparing directory to download song
     dirstorage = artistname + ' - ' + albumname  # create folder that
