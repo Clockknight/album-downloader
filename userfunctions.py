@@ -90,14 +90,14 @@ def urlinput():
     # TODO: brainstorm way to get artist and song title somehow?
     # for now just give up and just download basic mp3
     try:
-        video = YouTube(url)
-        video = video.streams.filter(mime_type="audio/mp4").order_by("abr").desc().first()
+        video = YouTube(url).streams.filter(type="video").order_by("abr").desc().first()
         title = video.title
-        cleanname = os.path.abspath(os.path.join(dirstorage, title + '.mp4'))
+        title = writable(title)
+        cleanname = os.path.abspath(os.path.join(dirstorage, title)) + '.mp4'
         video.download(filename=cleanname)
 
         # TODO: Create function to make folder
-        # TODO: Make this code block (also in the album download function) a helper function instead
+        # TODO: Make this code block (also present in the album download function) a helper function instead
         clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
         video = cleanname  # reassign video to path to mp4
         cleanname = cleanname[:-1] + '3'  # change where cleanname points
@@ -106,9 +106,10 @@ def urlinput():
     except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
         input("Invalid URL. Press Enter to return to the main menu.")
         optionSelect()
-    except:
-        input("Invalid URL. Press Enter to return to the main menu.")
-        optionSelect()
+        ''' except:
+        input("Unexpected error, please create an issue on https://github.com/Clockknight/album-downloader/issues.\n"
+              "Press Enter to return to the main menu.")
+        optionSelect()'''
 
 
 
@@ -334,3 +335,10 @@ def searchParse(searchTerms):
                     confirmedString += (str(searchTerms[i])) + ' '
 
         return confirmedString
+
+
+def writable(input):
+    # Function returns input but removing characters not allowed in windows file names
+    pattern = r'[:<>#%&{}\*\?\\\/|]'
+    input = re.sub(pattern, "", input)
+    return input
