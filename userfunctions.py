@@ -10,7 +10,6 @@ from pytube import YouTube
 import ssl
 import re
 
-
 # Text based menu to choose between options
 def optionSelect():
     global infodict
@@ -82,7 +81,12 @@ def urlinput():
     os.makedirs(dirstorage, exist_ok=True)  # Make the folder
 
     url = input('\nPlease input the url of the video you want to download.\n\t')
-    downloadsong(YouTube(url))
+
+    try:
+        downloadsong(YouTube(url))
+    except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
+        input("Invalid URL. Press Enter to return to the main menu.")
+        optionSelect()
 
 
 # code that defines if  input is an artist or a release
@@ -136,7 +140,7 @@ def parserelease(query):
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artistname = name.find('a').text
     infodict["artistname"] = artistname  # separate artist
-    infodict["albumname"] = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
+    infodict['albumname'] = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
     print('\tDownloading - ' + infodict["albumname"])
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
@@ -153,36 +157,17 @@ def parserelease(query):
                                           infodict["albumname"])  # create folder for artist, and subfolder for release
     os.makedirs(infodict["dirstorage"], exist_ok=True)  # Make the folder
 
-    skippedlist = downloadalbum(songlistin(soup))
+    skippedlist = downloadalbum(songlistin(soup), infodict)
 
 
-# Takes list of words from search, returns words that should be the artist's name
-def searchParse(searchTerms):
-    artistIndex = 0
-    confirmedString = ''
-
-    while artistIndex == 0:
-        artistIndex = input(
-            'Please input how many words long the artist\'s name is. (Each word is printed above in a new line.)\n')
-        if artistIndex.isnumeric():  # Check to make sure the string is made of numbers
-            artistIndex = int(artistIndex)  # Convert the string into an integer
-            if artistIndex <= 0 or artistIndex > len(searchTerms):  # Check if the input is within the
-                print('Sorry, not a valid response. Please try again.')
-                artistIndex = 0
-            else:
-                for i in range(0, artistIndex):
-                    confirmedString += (str(searchTerms[i])) + ' '
-
-        return confirmedString
-
-
-def downloadalbum(songnames):
-    coverart = infodict["coverart"]
+def downloadalbum(songnames, infodict):
     skippedList = []
-    songcount = 0
+    infodict["songcount"] = 0
+    infodict["totalcount"] = len(songnames)
     # mega Codeblock to download array's songs
     # Use album name + song name + "song" in youtube search
     for songname in songnames:
+        infodict["songname"] = songname
         print('\t\tDownloading - ' + songname)
 
         results = Search(infodict["albumname"] + ' song ' + songname).results
@@ -206,52 +191,19 @@ def downloadalbum(songnames):
 
         cleanname = os.path.abspath(
             os.path.join(infodict["dirstorage"], cleanname + '.mp4'))  # cleanname is directory of mp4
-        songcount += 1  # increment songcount once song is found, before downloading it
+        infodict["songcount"] += 1  # increment songcount once song is found, before downloading it
+
         try:
-            # TODO: Replace below with call to some function
-            # Block is heavy in terms of process time, but only way to write downloaded youtube videos into taggables
-            # if possible, a way to download a mp3 directly would be useful
-            # downloadsong()
-            video = video.streams.filter(mime_type="audio/mp4").order_by("abr").desc().first()
-            video.download(filename=cleanname)  # download video as mp4
-            clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
-            video = cleanname  # reassign video to path to mp4
-            cleanname = cleanname[:-1] + '3'  # change where cleanname points
-            clip.write_audiofile(cleanname)  # write audio to an mp3 file
-
-            os.remove(video)  # delete old mp4
-
-        except:  # Skip to next song if above block raises an error
+            downloadsong(video, infodict)
+        except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:  # Skip to next song if above block raises an error
             print('Warning: issue downloading from YouTube - ' + songname)
             skippedList.append(songname)
             continue
 
-        tagtarget = eyed3.load(cleanname)  # creates mp3audiofile at downloaded mp3
-        tagtarget = tagtarget.tag
-        tagtarget.title = songname
-        tagtarget.artist = infodict["artistname"]
-        tagtarget.album_artist = infodict["artistname"]
-        tagtarget.album = infodict["albumname"]
-        tagtarget.track_num = (songcount, len(songnames))
-        if coverart != 'fail':  # Check if coverart is actually
-            coverart = urllib.request.urlopen(infodict["coverart"])
-            coverart = coverart.read()
-            tagtarget.images.set(3, coverart, "image/jpeg")
-            coverart = "fail"
-
-        tagtarget.save(cleanname)
 
         # TODO Save album or add it to artist in history.json
 
     return skippedList
-
-
-
-def writable(input):
-    # Function returns input but removing characters not allowed in windows file names
-    pattern = r'[:<>#%&{}\*\?\\\/|]'
-    input = re.sub(pattern, "", input)
-    return input
 
 
 def songlistin(releasesoup):
@@ -273,34 +225,48 @@ def songlistin(releasesoup):
     return result
 
 
-def downloadsong(ytobj):
-    try:
-        video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
-        title = video.title
-        title = writable(title)
-        cleanname = os.path.abspath(os.path.join(infodict["dirstorage"], title)) + '.mp4'
-        video.download(filename=cleanname)
+def downloadsong(ytobj, infodict):
+    video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
+    title = video.title
+    title = writable(title)
+    cleanname = os.path.abspath(os.path.join(infodict["dirstorage"], title)) + '.mp4'
+    video.download(filename=cleanname)
 
-        # TODO: Make this code block (also present in the album download function) a helper function instead
-        clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
-        video = cleanname  # reassign video to path to mp4
-        cleanname = cleanname[:-1] + '3'  # change where cleanname points
-        clip.write_audiofile(cleanname)  # write audio to an mp3 file
-        os.remove(video)  # delete old mp4
-    except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
-        input("Invalid URL. Press Enter to return to the main menu.")
-        optionSelect()
-        ''' except:
-        input("Unexpected error, please create an issue on https://github.com/Clockknight/album-downloader/issues.\n"
-              "Press Enter to return to the main menu.")
-        optionSelect()'''
+    # TODO: Make this code block (also present in the album download function) a helper function instead
+    clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
+    video = cleanname  # reassign video to path to mp4
+    cleanname = cleanname[:-1] + '3'  # change where cleanname points
+    clip.write_audiofile(cleanname)  # write audio to an mp3 file
+    os.remove(video)  # delete old mp4
+
+    if "albumname" in infodict:
+        tagsong(cleanname, infodict)
 
 
-# def tagsong(ytobj?):
-def createfolder(dirthing):
-    return 0
+def tagsong(target, infodict):
+    tagtarget = eyed3.load(target)  # creates mp3audiofile at downloaded mp3
+    tagtarget = tagtarget.tag
+    tagtarget.title = infodict["songname"]
+    tagtarget.artist = infodict["artistname"]
+    tagtarget.album_artist = infodict["artistname"]
+    tagtarget.album = infodict["albumname"]
+    tagtarget.track_num = (infodict["songcount"], infodict["totalcount"])
+    if infodict["coverart"] != 'fail':  # Check if coverart is actually valid
+        coverart = urllib.request.urlopen(infodict["coverart"])
+        coverart = coverart.read()
+        tagtarget.images.set(3, coverart, "image/jpeg")
+        infodict["coverart"] = "fail"
+
+    tagtarget.save(target)
 
 
+# function to download any releases that are on the artist's discog page but not in any of the jsons in jsonarray
 def update(jsonarray):
-    # function to download any releases that are on the artist's discog page but not in any of the jsons in jsonarray
     return 0
+
+
+# Function returns rewrite but removing characters not allowed in Windows file names
+def writable(rewrite):
+    pattern = r'[:<>#%&{}\*\?\\\/|]'
+    rewrite = re.sub(pattern, "", rewrite)
+    return rewrite
