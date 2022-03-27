@@ -80,8 +80,14 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://Clockknight.github.io)
 
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `Clockknight`album-downloader `album-downloader`, ``, `tyler-wang-b3241963`, `gmail`, `tylerf2wang`, `Album Downloader
-`, `Python based script that downloads discographies and applies tags according to Discogs`
+Code has various modes to find songs to download, and tag based on information on [Discogs.com](https://discogs.com). When using Cache or Search Modes, mp3s downloaded should have 
+* Album Name
+* Album Artwork
+* Song Name
+* Track Number
+* Artist Name
+
+In the mp3 file. Also has url mode to support downloading a YouTube video as an mp3 directly, and Update will check for previously undownloaded releases from any artists that you've used this script for before.  
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -94,7 +100,8 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 * [pytube](https://github.com/pytube/pytube)
 * [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/)
 * [moviepy](https://zulko.github.io/moviepy/)
-* [ssl](https://pypi.org/project/ssl/)
+* [shutil](https://docs.python.org/3/library/shutil.html)
+* [regex](https://docs.python.org/3/library/re.html)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

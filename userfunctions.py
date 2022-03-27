@@ -7,8 +7,9 @@ from pytube import Search
 from bs4 import BeautifulSoup
 from moviepy.editor import *
 from pytube import YouTube
-import ssl
+import shutil
 import re
+
 
 # Text based menu to choose between options
 def optionSelect():
@@ -18,17 +19,20 @@ def optionSelect():
     option = input('''
 Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
 
-1) Cache Mode
+1) Cache Mode {Not Implemented}
 Provide a .txt file with links to album's google result pages, seperated by lines.
 
-2) Search Mode (Artist)
+2) Search Mode (Artist) {Not Implemented}
 Search for an artist's discography. The artist's discography will be stored in history.json
 
 3) Search Mode (Album)
 Search for an album. Recommended for albums with generic artist like "Various".
 
+4) Update {Not Implemented}
+Will check for new releases from artists that you have used this script to look at before. 
+
 8) URL Mode
-Paste in a URL, and the program will do it's best to parse the information.
+Paste in a YouTube URL, and the program will download it.
 
 9) Settings
 Change the settings of the script.
@@ -39,11 +43,13 @@ Change the settings of the script.
 
     match option:
         case '1':
-            cacheMode()
+            cacheinput()
         case '2':
             searchinput(0)
         case '3':
             searchinput(1)
+        case '4':
+            update()
         case '8':
             urlinput()
         case '9':
@@ -56,11 +62,12 @@ Change the settings of the script.
     optionSelect()  # Calls function again
 
 
-# TODO implement cacheMode
+# Functions that take input from user, pass release pages onto parse functions
+# TODO implement cacheinput
 # needs to refer to clockknight want.txt, and then run
 # parses each line as new input, prompts user to clarify if each line is an artist or a user
 # if it is a url, note it and move on instead of actually asking
-def cacheMode():
+def cacheinput():
     # Find text file with links to google searches of albums' songs
     fileDir = input(
         'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
@@ -83,7 +90,7 @@ def urlinput():
     url = input('\nPlease input the url of the video you want to download.\n\t')
 
     try:
-        downloadsong(YouTube(url))
+        downloadsong(YouTube(url), infodict)
     except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
         input("Invalid URL. Press Enter to return to the main menu.")
         optionSelect()
@@ -110,12 +117,12 @@ def searchprocess(word, searchterm):
         print('Error:')
 
     # Codeblock to try and find albums based on mode provided
+    soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
+
     match word:
         case 'artist':
-            print("artist mode not implemented, here's dmc5")
-            parserelease('https://www.discogs.com/master/1575693-Various-Devil-May-Cry-5-Original-Soundtrack')
+            soup
         case 'release':
-            soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
             divlist = soup.find_all('div',
                                     {"class": "card_large"})  # Creates a list from all the divs that make up the cards
             for div in divlist:  # Go through each div
@@ -124,6 +131,7 @@ def searchprocess(word, searchterm):
                     break
 
 
+# Function finds information in release page and stores in infodict. Calls downloadalbum
 def parserelease(query):
     infodict = {}
     blacklistwords = ['Original', 'Soundtrack']
@@ -142,11 +150,10 @@ def parserelease(query):
     infodict["artistname"] = artistname  # separate artist
     infodict['albumname'] = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
-    print('\tDownloading - ' + infodict["albumname"])
+    print('\tDownloading Album - ' + infodict["albumname"])
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
     try:
-        # TODO actually implement a way to get the album art from the discogs page
-        infodict["coverart"] = requests.get(coverart.find('a')['href'])
+        infodict["coverart"] = requests.get("https://discogs.com" + coverart.find('a')['href'])
     except:
         print('Warning: Problem getting album art - ' + infodict[
             "albumname"])  # Let the user know the album art isn't available
@@ -160,6 +167,7 @@ def parserelease(query):
     skippedlist = downloadalbum(songlistin(soup), infodict)
 
 
+# Function that gets Youtube Objects ready to send to downloadsong
 def downloadalbum(songnames, infodict):
     skippedList = []
     infodict["songcount"] = 0
@@ -200,31 +208,18 @@ def downloadalbum(songnames, infodict):
             skippedList.append(songname)
             continue
 
-
         # TODO Save album or add it to artist in history.json
 
     return skippedList
 
 
-def songlistin(releasesoup):
-    result = []
-    # find table with class, tbody inside
-    # regex for tracklist_[5 alphnumchars]
-    regexthing = r"tracklist_\w{5}"
-    table = releasesoup.find("table", {"class": re.compile(regexthing)})
-    table = table.find("tbody").find_all('tr', {})  # find table with songs
-    for tr in table:
-        # only consider tr if they have no class/ if they have data-track-position
-        if tr.has_attr("data-track-position"):
-            search = tr.find_all('td')  # find tds (columns) inside tr
-            search = search[2]
-            search = search.find("span")
-            search = search.text
-            result.append(search)  # note 3rd td - span as song title
-
-    return result
+# Function to download any releases that are on the artist's discog page but not in any of the jsons in jsonarray
+def update(jsonarray):
+    return 0
 
 
+# Functions that download albums or songs, after parsing info
+# Function that downloads song, calls tagsong if the mp3 is part of an album
 def downloadsong(ytobj, infodict):
     video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
     title = video.title
@@ -243,6 +238,7 @@ def downloadsong(ytobj, infodict):
         tagsong(cleanname, infodict)
 
 
+# Song tags mp3 with info from infodict
 def tagsong(target, infodict):
     tagtarget = eyed3.load(target)  # creates mp3audiofile at downloaded mp3
     tagtarget = tagtarget.tag
@@ -252,21 +248,45 @@ def tagsong(target, infodict):
     tagtarget.album = infodict["albumname"]
     tagtarget.track_num = (infodict["songcount"], infodict["totalcount"])
     if infodict["coverart"] != 'fail':  # Check if coverart is actually valid
-        coverart = urllib.request.urlopen(infodict["coverart"])
-        coverart = coverart.read()
-        tagtarget.images.set(3, coverart, "image/jpeg")
+        coverart = infodict["coverart"].url
+
+        filename = os.path.join(infodict["dirstorage"], infodict["albumname"] + ".jpeg")
+        r = requests.get(coverart, stream=True)
+        r.raw.decode_content = True
+
+        with open(filename, 'wb') as f:
+            shutil.copyfileobj(r.raw, f)
+
+        with open(filename, "rb") as f:
+            tagtarget.images.set(3, f.read(), "image/jpeg")
         infodict["coverart"] = "fail"
 
     tagtarget.save(target)
 
 
-# function to download any releases that are on the artist's discog page but not in any of the jsons in jsonarray
-def update(jsonarray):
-    return 0
-
-
+# Helper functions
 # Function returns rewrite but removing characters not allowed in Windows file names
 def writable(rewrite):
     pattern = r'[:<>#%&{}\*\?\\\/|]'
     rewrite = re.sub(pattern, "", rewrite)
     return rewrite
+
+
+# Function parses information from the release page on discogs, returns array of songnames
+def songlistin(releasesoup):
+    result = []
+    # find table with class, tbody inside
+    # regex for tracklist_[5 alphnumchars]
+    regexthing = r"tracklist_\w{5}"
+    table = releasesoup.find("table", {"class": re.compile(regexthing)})
+    table = table.find("tbody").find_all('tr', {})  # find table with songs
+    for tr in table:
+        # only consider tr if they have no class/ if they have data-track-position
+        if tr.has_attr("data-track-position"):
+            search = tr.find_all('td')  # find tds (columns) inside tr
+            search = search[2]
+            search = search.find("span")
+            search = search.text
+            result.append(search)  # note 3rd td - span as song title
+
+    return result
