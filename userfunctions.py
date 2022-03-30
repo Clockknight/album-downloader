@@ -12,10 +12,7 @@ import re
 
 
 # Text based menu to choose between options
-def optionSelect():
-    global infodict
-    infodict = {}
-
+def optionselect():
     option = input('''
 Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
 
@@ -59,14 +56,17 @@ Change the settings of the script.
         case _:
             print('Invalid option selected. Please try again.\n\n')
 
-    optionSelect()  # Calls function again
+    optionselect()  # Calls function again
 
 
 # Functions that take input from user, pass release pages onto parse functions
+
 # TODO implement cacheinput
 # needs to refer to clockknight want.txt, and then run
 # parses each line as new input, prompts user to clarify if each line is an artist or a user
 # if it is a url, note it and move on instead of actually asking
+
+# Takes input to file that has multiple inputs from user
 def cacheinput():
     # Find text file with links to google searches of albums' songs
     fileDir = input(
@@ -74,7 +74,7 @@ def cacheinput():
 
     # Use readlines to seperate out the links of albums
     historyarray = open(fileDir, 'r').readlines()
-    # Run downloadAlbum
+    # Run downloadlistofsongs
     # for item in resultArray:
 
     # Pass array of artist jsons to update()
@@ -84,16 +84,18 @@ def cacheinput():
 # user gives url as input, script downloads single song
 def urlinput():
     dirstorage = "URL Downloads"
-    infodict["dirstorage"] = dirstorage
+    infodict = {"dirstorage": dirstorage}
     os.makedirs(dirstorage, exist_ok=True)  # Make the folder
-
     url = input('\nPlease input the url of the video you want to download.\n\t')
 
     try:
-        downloadsong(YouTube(url), infodict)
+        # Declare ytobj now to declare infodict[albumart] as the youtube thumbnail
+        ytobj = YouTube(url)
+        infodict["albumart"] = ytobj.thumbnail_url
+        downloadsong(ytobj, infodict)
     except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
         input("Invalid URL. Press Enter to return to the main menu.")
-        optionSelect()
+        optionselect()
 
 
 # code that defines if  input is an artist or a release
@@ -110,28 +112,49 @@ def searchinput(mode):
 def searchprocess(word, searchterm):
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word  # makes url to search for results
-
-    try:
-        page = requests.get(query)  # Use requests on the new URL
-    except:
-        print('Error:')
+    page = requests.get(query)
 
     # Codeblock to try and find albums based on mode provided
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
 
-    match word:
-        case 'artist':
-            soup
-        case 'release':
-            divlist = soup.find_all('div',
-                                    {"class": "card_large"})  # Creates a list from all the divs that make up the cards
-            for div in divlist:  # Go through each div
-                if div.find('h4').find('a')['title'] == searchterm:  # compare input to card's title
+    # Creates a list from all the divs that make up the cards
+    divlist = soup.find_all('div',{"class": "card_large"})
+
+    # Go through each div, each one has a release/artist with a link out
+    for div in divlist:
+        # TODO Give up and print a bunch of results if no perfect match is found
+        # TODO Check if multiple versions from different artists exist
+        result = div.find('h4').find('a')['title']
+        if result == searchterm:  # compare input to card's title
+            match word:
+                case 'release':
                     parserelease("https://discogs.com" + div.a["href"])  # Store first successful return then break
-                    break
+                case 'artist':
+                    for release in parseartist("https://discogs.com" + div.a["href"]):
+                        parserelease(release)
+                        # figure out artist page
+                        # find all releases in the table
+                        # pass each to parserelease
+            break
 
+# Function finds all releases from an artist, returns array of release urls
+def parseartist(query):
+    results = []
+    # TODO How to deal with multiple pages of results?
+    soup = requests.get(query)
+    soup = BeautifulSoup(soup.text, "html.parser")
 
-# Function finds information in release page and stores in infodict. Calls downloadalbum
+    # < table class ="cards table_responsive layout_normal" id="artist" >
+    trs = soup.find("table", id="artist").find_all("tr")
+    for tr in trs:
+        # Every tr with an album has this attribute
+        if tr.has_attr("data-group-url"):
+            tr = tr.find("a")
+            results.append("https://discogs.com" + tr["href"])
+
+    return results
+
+# Function finds information in release page and stores in infodict. Calls downloadlistofsongs
 def parserelease(query):
     infodict = {}
     blacklistwords = ['Original', 'Soundtrack']
@@ -150,7 +173,7 @@ def parserelease(query):
     infodict["artistname"] = artistname  # separate artist
     infodict['albumname'] = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
-    print('\tDownloading Album - ' + infodict["albumname"])
+    print('\n\tDownloading Album - ' + infodict["albumname"])
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
     try:
         infodict["coverart"] = requests.get("https://discogs.com" + coverart.find('a')['href'])
@@ -164,11 +187,11 @@ def parserelease(query):
                                           infodict["albumname"])  # create folder for artist, and subfolder for release
     os.makedirs(infodict["dirstorage"], exist_ok=True)  # Make the folder
 
-    skippedlist = downloadalbum(songlistin(soup), infodict)
+    skippedlist = downloadlistofsongs(songlistin(soup), infodict)
 
 
 # Function that gets Youtube Objects ready to send to downloadsong
-def downloadalbum(songnames, infodict):
+def downloadlistofsongs(songnames, infodict):
     skippedList = []
     infodict["songcount"] = 0
     infodict["totalcount"] = len(songnames)
@@ -184,9 +207,13 @@ def downloadalbum(songnames, infodict):
 
         for video in results:  # Go through videos pulled
             loop -= 1
-            if video.length < 15 * 60:  # only filter in place is making sure the video is at least 15 min
+            # TODO Find way to use infodict to store song length from discogs page, and pull videos that are close to that length
+                # Range is 95% to 105% of the song length
+            if video.length < 15 * 60:  # only filter in place is making sure the video is at most 15 min
                 check = True
                 break  # break out of check
+            # TODO Include filter to make sure each word in the song name and artist name is in the video
+
 
         # check, catches if no videos in first results are
         if not check and loop == 0:
@@ -197,8 +224,8 @@ def downloadalbum(songnames, infodict):
 
         cleanname = writable(songname)  # remove chars that will mess up processing below
 
-        cleanname = os.path.abspath(
-            os.path.join(infodict["dirstorage"], cleanname + '.mp4'))  # cleanname is directory of mp4
+        # cleanname is directory of mp4
+        cleanname = os.path.abspath(os.path.join(infodict["dirstorage"], cleanname + '.mp4'))
         infodict["songcount"] += 1  # increment songcount once song is found, before downloading it
 
         try:
@@ -219,6 +246,7 @@ def update(jsonarray):
 
 
 # Functions that download albums or songs, after parsing info
+
 # Function that downloads song, calls tagsong if the mp3 is part of an album
 def downloadsong(ytobj, infodict):
     video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
@@ -265,9 +293,10 @@ def tagsong(target, infodict):
 
 
 # Helper functions
+
 # Function returns rewrite but removing characters not allowed in Windows file names
 def writable(rewrite):
-    pattern = r'[:<>#%&{}\*\?\\\/|]'
+    pattern = r'[:<>#%&{}\*\?\\\/|\"]'
     rewrite = re.sub(pattern, "", rewrite)
     return rewrite
 
