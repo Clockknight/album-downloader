@@ -110,6 +110,8 @@ def searchinput(mode):
 
 # Finds artist or release based on word and searchterm passed
 def searchprocess(word, searchterm):
+    resultartiststhatarentmatching = []
+    searchterm = searchterm.lower()
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word  # makes url to search for results
     page = requests.get(query)
@@ -124,18 +126,33 @@ def searchprocess(word, searchterm):
     for div in divlist:
         # TODO Give up and print a bunch of results if no perfect match is found
         # TODO Check if multiple versions from different artists exist
-        result = div.find('h4').find('a')['title']
+        result = div.find('h4').find('a')['title'].lower()
         if result == searchterm:  # compare input to card's title
             match word:
                 case 'release':
                     parserelease("https://discogs.com" + div.a["href"])  # Store first successful return then break
                 case 'artist':
-                    for release in parseartist("https://discogs.com" + div.a["href"]):
-                        parserelease(release)
-                        # figure out artist page
-                        # find all releases in the table
-                        # pass each to parserelease
+                    # Fake do while loop
+                    # Does
+                    index = 1
+                    while True:
+                        value = parseartist("https://discogs.com" + div.a["href"] + "?page=" + str(index))
+                        if not value:
+                            break
+                        for release in value:
+                            parserelease(release)
+                            # figure out artist page
+                            # find all releases in the table
+                            # pass each to parserelease
+                        index += 1
+
+            # Stops looking at results, returns first result
             break
+
+        # Adds name of artist to array
+        if result not in resultartiststhatarentmatching: resultartiststhatarentmatching.append(result)
+
+    # Fail case here (this assumes first page has 0 results)
 
 # Function finds all releases from an artist, returns array of release urls
 def parseartist(query):
