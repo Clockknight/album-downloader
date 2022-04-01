@@ -89,6 +89,8 @@ Code has various modes to find songs to download, and tag based on information o
 
 In the mp3 file. Also has url mode to support downloading a YouTube video as an mp3 directly, and Update will check for previously undownloaded releases from any artists that you've used this script for before.  
 
+For more projects, check out my [github.io](http://clockknight.github.io).
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
@@ -111,35 +113,15 @@ In the mp3 file. Also has url mode to support downloading a YouTube video as an 
 ## Getting Started
 To get a local copy up and running follow these simple example steps.
 
-### Installation
+Currently working on getting a release. Current version can be hard to work with:
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/Clockknight/album-downloader.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
+1. Be sure python and all the above libraries are installed
+
+2. Run the script
+
+3. Search an artist or release on [Discogs](https://Discogs.com) - results are pulled directly from that site. 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
-<!-- USAGE EXAMPLES -->
-## Usage
-
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 
 
 <!-- ROADMAP -->

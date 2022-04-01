@@ -42,9 +42,9 @@ Change the settings of the script.
         case '1':
             cacheinput()
         case '2':
-            searchinput(0)
+            searchinput(0, "")
         case '3':
-            searchinput(1)
+            searchinput(1, "")
         case '4':
             update()
         case '8':
@@ -71,6 +71,7 @@ def cacheinput():
     # Find text file with links to google searches of albums' songs
     fileDir = input(
         'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
+
 
     # Use readlines to seperate out the links of albums
     historyarray = open(fileDir, 'r').readlines()
@@ -99,12 +100,16 @@ def urlinput():
 
 
 # code that defines if  input is an artist or a release
-def searchinput(mode):
+def searchinput(mode, searchterm):
+
     word = "artist"
     if mode == 1:
         word = "release"
-    # Get input for artist/album name
-    searchterm = input('\nPlease input the name of the ' + word + ' you want to search for.\n\t')
+
+    # Get input for artist/album name when no term is passed
+    if searchterm == "":
+        searchterm = input('\nPlease input the name of the ' + word + ' you want to search for.\n\t')
+
     searchprocess(word, searchterm)  # call helper function
 
 
@@ -120,7 +125,7 @@ def searchprocess(word, searchterm):
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
 
     # Creates a list from all the divs that make up the cards
-    divlist = soup.find_all('div',{"class": "card_large"})
+    divlist = soup.find_all('div', {"class": "card_large"})
 
     # Go through each div, each one has a release/artist with a link out
     for div in divlist:
@@ -136,28 +141,29 @@ def searchprocess(word, searchterm):
                     # Does
                     index = 1
                     while True:
+                        # store array returned from parseartist in value
                         value = parseartist("https://discogs.com" + div.a["href"] + "?page=" + str(index))
+                        # if nothing is returned, break out
                         if not value:
                             break
+                        # pass each release url into parserelease to be scraped
                         for release in value:
                             parserelease(release)
-                            # figure out artist page
-                            # find all releases in the table
-                            # pass each to parserelease
+                        # go to next page of artist
                         index += 1
 
-            # Stops looking at results, returns first result
+            # stops code from trying to scrape other release/artists
             break
 
-        # Adds name of artist to array
+        # Adds name of artist to array if its not a match
         if result not in resultartiststhatarentmatching: resultartiststhatarentmatching.append(result)
 
     # Fail case here (this assumes first page has 0 results)
 
+
 # Function finds all releases from an artist, returns array of release urls
 def parseartist(query):
     results = []
-    # TODO How to deal with multiple pages of results?
     soup = requests.get(query)
     soup = BeautifulSoup(soup.text, "html.parser")
 
@@ -171,11 +177,10 @@ def parseartist(query):
 
     return results
 
+
 # Function finds information in release page and stores in infodict. Calls downloadlistofsongs
 def parserelease(query):
     infodict = {}
-    blacklistwords = ['Original', 'Soundtrack']
-    songcount = 0
 
     #  tryexcept for passed query
     try:
@@ -200,44 +205,78 @@ def parserelease(query):
         infodict["coverart"] = 'fail'  # set it to fail for mp3 tag check
 
     # Preparing directory to download song
-    infodict["dirstorage"] = os.path.join(infodict["artistname"],
-                                          infodict["albumname"])  # create folder for artist, and subfolder for release
+    infodict["dirstorage"] = os.path.join(writable(infodict["artistname"]),
+                                          writable(infodict["albumname"]))  # create folder for artist, and subfolder for release
     os.makedirs(infodict["dirstorage"], exist_ok=True)  # Make the folder
 
-    skippedlist = downloadlistofsongs(songlistin(soup), infodict)
+    infodict["songs"] = songlistin(soup)
+
+    skippedlist = downloadlistofsongs(infodict)
+    # TODO make this append skippedlist to skipped songs on the json
 
 
 # Function that gets Youtube Objects ready to send to downloadsong
-def downloadlistofsongs(songnames, infodict):
+def downloadlistofsongs(infodict):
     skippedList = []
     infodict["songcount"] = 0
-    infodict["totalcount"] = len(songnames)
+    infodict["totalcount"] = len(infodict["songs"])
     # mega Codeblock to download array's songs
     # Use album name + song name + "song" in youtube search
-    for songname in songnames:
-        infodict["songname"] = songname
+
+    for songname in infodict["songs"]:
+        infodict["cursongname"] = songname
         print('\t\tDownloading - ' + songname)
 
-        results = Search(infodict["albumname"] + ' song ' + songname).results
-        loop = len(results)  # variable to track how many videos are past
+        res = Search(infodict["albumname"] + ' song ' + songname).results
+        loop = len(res)
         check = False
+        # Check at least 100 videos
+        '''
+        Codeblock that doesnt work, pytube get_next_results() raises indexerror
+        while True:
+            res.get_next_results()
+            loop = len(res.results)
 
-        for video in results:  # Go through videos pulled
+            if loop >= 100: break
+        '''
+
+        for video in res:  # Go through videos pulled
             loop -= 1
-            # TODO Find way to use infodict to store song length from discogs page, and pull videos that are close to that length
-                # Range is 95% to 105% of the song length
-            if video.length < 15 * 60:  # only filter in place is making sure the video is at most 15 min
-                check = True
-                break  # break out of check
-            # TODO Include filter to make sure each word in the song name and artist name is in the video
+            videoname = video.streams[0].title.split()
+            # Range is 95% to 110% of the song length
+            vidlen = video.length
 
+            songlen = parsetime(infodict["songs"][songname])
+
+            if songlen not in range(vidlen * .95, vidlen * 1.1):
+                check = True
+                break
+
+            ''' 
+            Better filter WIP:
+            
+            
+            '''
+            for word in infodict["cursongname"].split():
+                if word not in videoname:
+                    check = True
+                    break
+            for word in infodict["albumname"].split():
+                if word not in videoname:
+                    check = True
+                    break
+            for word in infodict["artistname"].split():
+                if word not in videoname:
+                    check = True
+                    break
 
         # check, catches if no videos in first results are
         if not check and loop == 0:
-            # TODO make it so code tries the loop again with results.nextresults (sic)
             print('Warning: No result found within parameters - ' + songname)  # let user know about this
             skippedList.append(songname)  # put it on the skipped songs
             continue  # move onto next songname in this case
+
+        # if check to see if loop is working
 
         cleanname = writable(songname)  # remove chars that will mess up processing below
 
@@ -246,7 +285,8 @@ def downloadlistofsongs(songnames, infodict):
         infodict["songcount"] += 1  # increment songcount once song is found, before downloading it
 
         try:
-            downloadsong(video, infodict)
+            if not downloadsong(video, infodict):
+                skippedList.append(songname)
         except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:  # Skip to next song if above block raises an error
             print('Warning: issue downloading from YouTube - ' + songname)
             skippedList.append(songname)
@@ -264,7 +304,7 @@ def update(jsonarray):
 
 # Functions that download albums or songs, after parsing info
 
-# Function that downloads song, calls tagsong if the mp3 is part of an album
+# Function that downloads song, calls tagsong if the mp3 is part of an album. Returns bool based on if the mp3 file exists.
 def downloadsong(ytobj, infodict):
     video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
     title = video.title
@@ -272,22 +312,23 @@ def downloadsong(ytobj, infodict):
     cleanname = os.path.abspath(os.path.join(infodict["dirstorage"], title)) + '.mp4'
     video.download(filename=cleanname)
 
-    # TODO: Make this code block (also present in the album download function) a helper function instead
     clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
     video = cleanname  # reassign video to path to mp4
     cleanname = cleanname[:-1] + '3'  # change where cleanname points
-    clip.write_audiofile(cleanname)  # write audio to an mp3 file
+    clip.write_audiofile(cleanname, logger=None)  # write audio to an mp3 file
     os.remove(video)  # delete old mp4
 
     if "albumname" in infodict:
         tagsong(cleanname, infodict)
+
+    return os.path.exists(cleanname)
 
 
 # Song tags mp3 with info from infodict
 def tagsong(target, infodict):
     tagtarget = eyed3.load(target)  # creates mp3audiofile at downloaded mp3
     tagtarget = tagtarget.tag
-    tagtarget.title = infodict["songname"]
+    tagtarget.title = infodict["cursongname"]
     tagtarget.artist = infodict["artistname"]
     tagtarget.album_artist = infodict["artistname"]
     tagtarget.album = infodict["albumname"]
@@ -313,15 +354,17 @@ def tagsong(target, infodict):
 
 # Function returns rewrite but removing characters not allowed in Windows file names
 def writable(rewrite):
-    pattern = r'[:<>#%&{}\*\?\\\/|\"]'
+    pattern = r'[:<>\*\?\\\/|\"]'
     rewrite = re.sub(pattern, "", rewrite)
     return rewrite
 
 
+
 # Function parses information from the release page on discogs, returns array of songnames
 def songlistin(releasesoup):
-    result = []
+    result = {}
     # find table with class, tbody inside
+
     # regex for tracklist_[5 alphnumchars]
     regexthing = r"tracklist_\w{5}"
     table = releasesoup.find("table", {"class": re.compile(regexthing)})
@@ -329,10 +372,27 @@ def songlistin(releasesoup):
     for tr in table:
         # only consider tr if they have no class/ if they have data-track-position
         if tr.has_attr("data-track-position"):
-            search = tr.find_all('td')  # find tds (columns) inside tr
-            search = search[2]
-            search = search.find("span")
-            search = search.text
-            result.append(search)  # note 3rd td - span as song title
+            # find tds (columns) inside tr
+            tds = tr.find_all('td')
+
+            # 3rd tds is the song name
+            name = tds[2].find("span").text
+
+            # 4th tds is the song length
+            length = tds[3].text
+
+            result[name] = length
 
     return result
+
+# Function parses time formats from discogs
+def parsetime(instring):
+    timere = re.search('\d{1,2}', instring)
+    result = 0
+
+
+
+    for value in timere:
+        result += value
+
+    return int(result)
