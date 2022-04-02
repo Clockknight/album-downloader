@@ -1,4 +1,5 @@
 from userfunctions import *
 
-optionselect()
+while True:
+    optionselect()
 

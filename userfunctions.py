@@ -56,8 +56,6 @@ Change the settings of the script.
         case _:
             print('Invalid option selected. Please try again.\n\n')
 
-    optionselect()  # Calls function again
-
 
 # Functions that take input from user, pass release pages onto parse functions
 
@@ -71,7 +69,6 @@ def cacheinput():
     # Find text file with links to google searches of albums' songs
     fileDir = input(
         'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
-
 
     # Use readlines to seperate out the links of albums
     cachearray = open(fileDir, 'r').readlines()
@@ -96,12 +93,10 @@ def urlinput():
         downloadsong(ytobj, infodict)
     except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
         input("Invalid URL. Press Enter to return to the main menu.")
-        optionselect()
 
 
 # code that defines if  input is an artist or a release
 def searchinput(mode, searchterm):
-
     word = "artist"
     if mode == 1:
         word = "release"
@@ -141,7 +136,10 @@ def searchprocess(word, searchterm):
                     index = 1
                     while True:
                         # store array returned from parseartist in value
-                        value = parseartist("https://discogs.com" + div.a["href"] + "?page=" + str(index))
+                        try:
+                            value = parseartist("https://discogs.com" + div.a["href"] + "?page=" + str(index))
+                        except AttributeError as e:
+                            break
 
                         # if nothing is returned, break out
                         if not value:
@@ -208,7 +206,8 @@ def parserelease(query):
 
     # Preparing directory to download song
     infodict["dirstorage"] = os.path.join(writable(infodict["artistname"]),
-                                          writable(infodict["albumname"]))  # create folder for artist, and subfolder for release
+                                          writable(infodict[
+                                                       "albumname"]))  # create folder for artist, and subfolder for release
     os.makedirs(infodict["dirstorage"], exist_ok=True)  # Make the folder
 
     infodict["songs"] = songlistin(soup)
@@ -231,8 +230,8 @@ def downloadlistofsongs(infodict):
 
         res = Search(infodict["albumname"] + ' song ' + songname).results
         loop = len(res)
-        check = False
-        # Check at least 100 videos
+        songlen = parsetime(infodict["songs"][songname])
+        # check at least 100 videos
         '''
         Codeblock that doesnt work, pytube get_next_results() raises indexerror
         while True:
@@ -242,42 +241,48 @@ def downloadlistofsongs(infodict):
             if loop >= 100: break
         '''
 
+        videos = loop
+
+
         for video in res:  # Go through videos pulled
+            mismatchbool = False
+            print('\r\t\tAttempting video ' + str(videos-loop+1) + '/' + str(videos), end='\r', flush=True)
             loop -= 1
-            videoname = video.streams[0].title.split()
+            try:
+                videoname = video.streams[0].title.split()
+            except Exception as e:
+                print(e)
+                continue  # tryexcept for livestreams
+            for i in range(len(videoname)):
+                videoname[i] = videoname[i].lower()
             # Range is 95% to 110% of the song length
             vidlen = video.length
 
-            songlen = parsetime(infodict["songs"][songname])
-
-            if songlen not in range(int(songlen * .95), int(songlen * 1.25)):
-                check = True
+            # Filter for video codeblock
+            if vidlen not in range(int(songlen * .95), int(songlen * 1.25)):
+                mismatchbool = True
                 continue
-
-            ''' 
-            Better filter WIP:
-            
-            
-            '''
             for word in infodict["cursongname"].split():
-                if word not in videoname or check:
-                    check = True
+                if mismatchbool or (word.lower() not in videoname):
+                    mismatchbool = True
                     break
             for word in infodict["albumname"].split():
-                if word not in videoname or check:
-                    check = True
+                if mismatchbool or (word.lower() not in videoname):
+                    mismatchbool = True
                     break
             for word in infodict["artistname"].split():
-                if word not in videoname or check:
-                    check = True
+                if mismatchbool or (word.lower() not in videoname):
+                    mismatchbool = True
                     break
 
-            if not check: break
+            if not mismatchbool: break
 
         # check, catches if no videos in first results are
-        if not check and loop == 0:
+        if loop == 0:
             print('Warning: No result found within parameters - ' + songname)  # let user know about this
             continue  # move onto next songname in this case
+
+        print('\r\t\tDownloading...', end="\n", flush=True)
 
         # if check to see if loop is working
 
@@ -296,10 +301,10 @@ def downloadlistofsongs(infodict):
         # TODO Save album or add it to artist in history.json
         # architecture should look like
         # dict artists:
-            # keys are artistnames, values is a list of dicts
-            # dicts albums:
-                # keys are album names, values are lists
-                # lists songs: list of name of songs that have been downloaded before
+        # keys are artistnames, values is a list of dicts
+        # dicts albums:
+        # keys are album names, values are lists
+        # lists songs: list of name of songs that have been downloaded before
 
     return successfulsongs
 
@@ -366,7 +371,6 @@ def writable(rewrite):
     return rewrite
 
 
-
 # Function parses information from the release page on discogs, returns array of songnames
 def songlistin(releasesoup):
     result = {}
@@ -392,9 +396,9 @@ def songlistin(releasesoup):
 
     return result
 
+
 # Function parses time formats from discogs
 def parsetime(instring):
-
     # TODO raise error if string is not in format of digits and colons
     timere = re.compile('\d+')
     colre = re.findall(':', instring)
@@ -402,6 +406,7 @@ def parsetime(instring):
     result = 0
 
     for value in re.findall(timere, instring):
+        value = int(value)
         match (iter):
             # if 2nd iteration, then assume previous numbers are in seconds, convert to  minutes
             case 1:
@@ -415,10 +420,11 @@ def parsetime(instring):
             case 3:
                 value *= 24
 
-        result += int(value)
+        result += value
         iter -= 1
 
     return result
+
 
 # Function writes cache.json if it doesnt exist yet
 def checkhistory():
