@@ -131,25 +131,13 @@ def searchprocess(word, searchterm):
         if result == searchterm:  # compare input to card's title
             match word:
                 case 'release':
-                    parserelease("https://discogs.com" + div.a["href"])  # Store first successful return then break
+                    success = downloadrelease("https://discogs.com" + div.a["href"])  # Store first successful return then break
                 case 'artist':
-                    index = 1
-                    while True:
-                        # store array returned from parseartist in value
-                        try:
-                            value = parseartist("https://discogs.com" + div.a["href"] + "?page=" + str(index))
-                        except AttributeError as e:
-                            break
+                    success = parseartist("https://discogs.com" + div.a["href"] + "?page=")
 
-                        # if nothing is returned, break out
-                        if not value:
-                            break
-                        # pass each release url into parserelease to be scraped
-                        for release in value:
-                            parserelease(release)
-                        # go to next page of artist
-                        index += 1
 
+            # todo write json here
+            writejson(success)
             # stops code from trying to scrape other release/artists
             break
 
@@ -158,9 +146,31 @@ def searchprocess(word, searchterm):
 
     # Fail case here (this assumes first page has 0 results)
 
-
-# Function finds all releases from an artist, returns array of release urls
+# function that calls parseartistpage for each page in the given artist page, returns dicts of success songs in releases
 def parseartist(query):
+    index = 1
+    success = {}
+
+    while True:
+        # store array of releases to download
+        try:
+            releases = parseartistpage(query + str(index))
+        except AttributeError as e:
+            break
+
+        # if nothing is returned from above, break out (query for parseartistpage was an empty page)
+        if not releases:
+            break
+        for release in releases:
+            success.update(downloadrelease(release))
+        # go to next page of artist
+        index += 1
+
+    return success
+
+
+# Function finds all releases from a single artist's page, returns array of release urls
+def parseartistpage(query):
     results = []
     soup = requests.get(query)
     soup = BeautifulSoup(soup.text, "html.parser")
@@ -177,8 +187,9 @@ def parseartist(query):
 
 
 # Function finds information in release page and stores in infodict. Calls downloadlistofsongs
-def parserelease(query):
+def downloadrelease(query):
     infodict = {}
+    success = {"artists": {}}
 
     infodict["history"] = checkhistory()
 
@@ -212,8 +223,16 @@ def parserelease(query):
 
     infodict["songs"] = songlistin(soup)
 
-    successfulsongs = downloadlistofsongs(infodict)
-    # TODO make this append successfulsongs to skipped songs on the json
+    # Initialize the artist's value in the success dict as a dict
+    success = success[infodict["artistname"]]
+    success = {}
+
+    success[infodict["albumname"]] = downloadlistofsongs(infodict)
+
+    # TODO Save album or add it to artist in history.json
+
+    return success
+
 
 
 # Function that gets Youtube Objects ready to send to downloadsong
@@ -262,6 +281,8 @@ def downloadlistofsongs(infodict):
             if vidlen not in range(int(songlen * .95), int(songlen * 1.25)):
                 mismatchbool = True
                 continue
+
+            # TODO Improve this filter further by somehow compacting into a single regex, with the same restrictions
             for word in infodict["cursongname"].split():
                 if mismatchbool or (word.lower() not in videoname):
                     mismatchbool = True
@@ -297,14 +318,6 @@ def downloadlistofsongs(infodict):
         except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:  # Skip to next song if above block raises an error
             print('Warning: issue downloading from YouTube - ' + songname)
             continue
-
-        # TODO Save album or add it to artist in history.json
-        # architecture should look like
-        # dict artists:
-        # keys are artistnames, values is a list of dicts
-        # dicts albums:
-        # keys are album names, values are lists
-        # lists songs: list of name of songs that have been downloaded before
 
     return successfulsongs
 
@@ -435,3 +448,6 @@ def checkhistory():
             json.dump({}, f)
 
     return open(historydir)
+
+
+def writejson():
