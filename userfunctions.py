@@ -2,13 +2,13 @@ import eyed3
 import urllib
 import pytube
 import requests
-from pytube import Search
-from bs4 import BeautifulSoup
-from moviepy.editor import *
-from pytube import YouTube
 import json
 import shutil
 import re
+from pytube import Search
+from pytube import YouTube
+from bs4 import BeautifulSoup
+from moviepy.editor import *
 
 
 # Text based menu to choose between options
@@ -451,3 +451,4 @@ def checkhistory():
 
 
 def writejson():
+    return 0
