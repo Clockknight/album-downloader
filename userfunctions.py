@@ -450,5 +450,13 @@ def checkhistory():
     return open(historydir)
 
 
-def writejson():
+def writejson(valuearray):
+    # assume the following:
+    # slot 0 is json location
+    # slot 1 is name of artist
+    # slot 2 is name of release
+    # slot 3 is name of song
+
+    # write following to json
+    # assign value to appropriate location in layered dict with information given
     return 0
