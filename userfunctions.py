@@ -5,6 +5,7 @@ import requests
 import json
 import shutil
 import re
+from classes import *
 from pytube import Search
 from pytube import YouTube
 from bs4 import BeautifulSoup
@@ -82,6 +83,7 @@ def cacheinput():
 # user gives url as input, script downloads single song
 def urlinput():
     dirstorage = "URL Downloads"
+    # TODO replace all instance of infodict with reference to a Information class
     infodict = {"dirstorage": dirstorage}
     os.makedirs(dirstorage, exist_ok=True)  # Make the folder
     url = input('\nPlease input the url of the video you want to download.\n\t')
