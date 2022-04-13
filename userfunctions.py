@@ -75,9 +75,10 @@ def cacheinput():
     cachearray = open(fileDir, 'r').readlines()
     # Run downloadlistofsongs
     # for item in resultArray:
+    # ask user if its artist or album
+    # store information in related array
 
-    # Pass array of artist jsons to update()
-    update(cachearray)
+    # after for loop, call releaseinput() or artistinput() based on inputs given before
 
 
 # user gives url as input, script downloads single song
@@ -112,6 +113,7 @@ def searchinput(mode, searchterm):
 
 # Finds artist or release based on word and searchterm passed
 def searchprocess(word, searchterm):
+    superjson = readhistory()
     resultartiststhatarentmatching = []
     searchterm = searchterm.lower()
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
@@ -131,22 +133,26 @@ def searchprocess(word, searchterm):
         # TODO Check if multiple versions from different artists exist
         result = div.find('h4').find('a')['title'].lower()
         if result == searchterm:  # compare input to card's title
+            # Run different function mode chosen
             match word:
                 case 'release':
-                    success = downloadrelease("https://discogs.com" + div.a["href"])  # Store first successful return then break
+                    success = downloadrelease("https://discogs.com" + div.a["href"])
+                    process = {word:success}
+                    success = superjson
+
                 case 'artist':
+                    # Only artist mode has multipage support (Not an issue yet?)
                     success = parseartist("https://discogs.com" + div.a["href"] + "?page=")
+                    # TODO Make this write to json just the artist, since no results were found
 
-
-            # todo write json here
-            writejson(success)
-            # stops code from trying to scrape other release/artists
+            # After above search runs, write to the history json then break
+            writehistory(word, success)
             break
 
-        # Adds name of artist to array if its not a match
-        if result not in resultartiststhatarentmatching: resultartiststhatarentmatching.append(result)
 
-    # Fail case here (this assumes first page has 0 results)
+    # TODO Make Fail case here (this assumes first page has 0 matches)
+    # Should print out unique results scraped, and give user chance to correct input
+
 
 # function that calls parseartistpage for each page in the given artist page, returns dicts of success songs in releases
 def parseartist(query):
@@ -236,7 +242,6 @@ def downloadrelease(query):
     return success
 
 
-
 # Function that gets Youtube Objects ready to send to downloadsong
 def downloadlistofsongs(infodict):
     successfulsongs = []
@@ -264,10 +269,9 @@ def downloadlistofsongs(infodict):
 
         videos = loop
 
-
         for video in res:  # Go through videos pulled
             mismatchbool = False
-            print('\r\t\tAttempting video ' + str(videos-loop+1) + '/' + str(videos), end='\r', flush=True)
+            print('\r\t\tAttempting video ' + str(videos - loop + 1) + '/' + str(videos), end='\r', flush=True)
             loop -= 1
             try:
                 videoname = video.streams[0].title.split()
@@ -323,7 +327,7 @@ def downloadlistofsongs(infodict):
 
     return successfulsongs
 
-
+# todo implement update
 # Function to download any releases that are on the artist's discog page but not in any of the jsons in jsonarray
 def update(jsonarray):
     return 0
@@ -451,14 +455,20 @@ def checkhistory():
 
     return open(historydir)
 
-
-def writejson(valuearray):
+# TODO implement writehistory
+def writehistory(case, valuearray):
     # assume the following:
+    # case is "artist" or "release"
     # slot 0 is json location
     # slot 1 is name of artist
-    # slot 2 is name of release
-    # slot 3 is name of song
+    # slot 2 is dict of releases
+        # keys are release titles
+        # values are successful songs in those releases
 
-    # write following to json
-    # assign value to appropriate location in layered dict with information given
+    # write the above to the json in layered dict with information given
+    return 0
+
+# TODO implement readhistory
+def readhistory():
+    # return dict from json in history.json
     return 0
