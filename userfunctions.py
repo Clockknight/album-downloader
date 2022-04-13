@@ -12,8 +12,8 @@ from bs4 import BeautifulSoup
 from moviepy.editor import *
 
 
-# Text based menu to choose between options
 def optionselect():
+    """Text menu for user to choose option"""
     option = input('''
 Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
 
@@ -65,8 +65,8 @@ Change the settings of the script.
 # parses each line as new input, prompts user to clarify if each line is an artist or a user
 # if it is a url, note it and move on instead of actually asking
 
-# Takes input to file that has multiple inputs from user
 def cacheinput():
+    """Take multiple inputs from text file, ask user if given input is artist or release."""
     # Find text file with links to google searches of albums' songs
     fileDir = input(
         'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
@@ -81,8 +81,8 @@ def cacheinput():
     # after for loop, call releaseinput() or artistinput() based on inputs given before
 
 
-# user gives url as input, script downloads single song
 def urlinput():
+    """Download given YouTube URL as MP3."""
     dirstorage = "URL Downloads"
     # TODO replace all instance of infodict with reference to a Information class
     infodict = {"dirstorage": dirstorage}
@@ -98,8 +98,8 @@ def urlinput():
         input("Invalid URL. Press Enter to return to the main menu.")
 
 
-# code that defines if  input is an artist or a release
 def searchinput(mode, searchterm):
+    """Get user input for release or artist to search, then search it."""
     word = "artist"
     if mode == 1:
         word = "release"
@@ -111,8 +111,8 @@ def searchinput(mode, searchterm):
     searchprocess(word, searchterm)  # call helper function
 
 
-# Finds artist or release based on word and searchterm passed
 def searchprocess(word, searchterm):
+    """Parse relevant information and call to appropriate function."""
     superjson = readhistory()
     resultartiststhatarentmatching = []
     searchterm = searchterm.lower()
@@ -130,7 +130,7 @@ def searchprocess(word, searchterm):
     for div in divlist:
         # TODO Give up and print a bunch of results if no perfect match is found
 
-        # TODO Check if multiple versions from different artists exist
+        # TODO Check if multiple versions from different artists exist, get one with most songs
         result = div.find('h4').find('a')['title'].lower()
         if result == searchterm:  # compare input to card's title
             # Run different function mode chosen
@@ -146,7 +146,7 @@ def searchprocess(word, searchterm):
                     # TODO Make this write to json just the artist, since no results were found
 
             # After above search runs, write to the history json then break
-            writehistory(word, success)
+            writehistory(success)
             break
 
 
@@ -154,8 +154,8 @@ def searchprocess(word, searchterm):
     # Should print out unique results scraped, and give user chance to correct input
 
 
-# function that calls parseartistpage for each page in the given artist page, returns dicts of success songs in releases
 def parseartist(query):
+    """Parse artist, calling parseartistpage for each page. Return formatted list of songs downloaded."""
     index = 1
     success = {}
 
@@ -177,8 +177,8 @@ def parseartist(query):
     return success
 
 
-# Function finds all releases from a single artist's page, returns array of release urls
 def parseartistpage(query):
+    """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
     soup = requests.get(query)
     soup = BeautifulSoup(soup.text, "html.parser")
@@ -194,8 +194,8 @@ def parseartistpage(query):
     return results
 
 
-# Function finds information in release page and stores in infodict. Calls downloadlistofsongs
 def downloadrelease(query):
+    """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     infodict = {}
     success = {"artists": {}}
 
@@ -242,8 +242,8 @@ def downloadrelease(query):
     return success
 
 
-# Function that gets Youtube Objects ready to send to downloadsong
 def downloadlistofsongs(infodict):
+    """Send pytube YouTube objects to download song. Return formatted dict of success songs"""
     successfulsongs = []
     infodict["songcount"] = 0
     infodict["totalcount"] = len(infodict["songs"])
@@ -328,15 +328,15 @@ def downloadlistofsongs(infodict):
     return successfulsongs
 
 # todo implement update
-# Function to download any releases that are on the artist's discog page but not in any of the jsons in jsonarray
 def update(jsonarray):
+    """Check releases and artists for previously undownloaded songs. Call writehistory."""
     return 0
 
 
 # Functions that download albums or songs, after parsing info
 
-# Function that downloads song, calls tagsong if the mp3 is part of an album. Returns bool based on if the mp3 file exists.
 def downloadsong(ytobj, infodict):
+    """Download MP3 from YouTube object. Return bool based on if download was successful."""
     video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
     title = video.title
     title = writable(title)
@@ -355,8 +355,8 @@ def downloadsong(ytobj, infodict):
     return os.path.exists(cleanname)
 
 
-# Song tags mp3 with info from infodict
 def tagsong(target, infodict):
+    """Tag MP3 with given information."""
     tagtarget = eyed3.load(target)  # creates mp3audiofile at downloaded mp3
     tagtarget = tagtarget.tag
     tagtarget.title = infodict["cursongname"]
@@ -383,15 +383,15 @@ def tagsong(target, infodict):
 
 # Helper functions
 
-# Function returns rewrite but removing characters not allowed in Windows file names
 def writable(rewrite):
+    """Return given string, after removing all characters that would cause errors."""
     pattern = r'[:<>\*\?\\\/|\"]'
     rewrite = re.sub(pattern, "", rewrite)
     return rewrite
 
 
-# Function parses information from the release page on discogs, returns array of songnames
 def songlistin(releasesoup):
+    """Parse info from release page, return array of songs."""
     result = {}
     # find table with class, tbody inside
 
@@ -416,8 +416,8 @@ def songlistin(releasesoup):
     return result
 
 
-# Function parses time formats from discogs
 def parsetime(instring):
+    """Convert hh:mm:ss strings into int value in seconds."""
     # TODO raise error if string is not in format of digits and colons
     timere = re.compile('\d+')
     colre = re.findall(':', instring)
@@ -445,8 +445,8 @@ def parsetime(instring):
     return result
 
 
-# Function writes cache.json if it doesnt exist yet
 def checkhistory():
+    """Write history.json if it doesn't exist yet. Return the json file opened."""
     historydir = "history.json"
 
     if not os.path.exists(historydir):
@@ -456,7 +456,8 @@ def checkhistory():
     return open(historydir)
 
 # TODO implement writehistory
-def writehistory(case, valuearray):
+def writehistory(valuearray):
+    """Update values in history json with given values."""
     # assume the following:
     # case is "artist" or "release"
     # slot 0 is json location
@@ -470,5 +471,5 @@ def writehistory(case, valuearray):
 
 # TODO implement readhistory
 def readhistory():
-    # return dict from json in history.json
+    """Return history.json results as a dict."""
     return 0
