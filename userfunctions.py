@@ -395,7 +395,7 @@ def writable(rewrite):
 
 
 def songlistin(releasesoup):
-    """Parse info from release page, return array of songs."""
+    """Parse info from release page, return dict of songs and songlengths."""
     result = {}
     # find table with class, tbody inside
 
@@ -421,7 +421,7 @@ def songlistin(releasesoup):
 
 
 def parsetime(instring):
-    """Convert hh:mm:ss strings into int value in seconds."""
+    """Take hh:mm:ss string input, return int value in seconds."""
     # TODO raise error if string is not in format of digits and colons
     timere = re.compile('\d+')
     colre = re.findall(':', instring)
@@ -464,11 +464,11 @@ def checkhistory():
 def writehistory(valuearray):
     """Update values in history json with given values."""
     # assume the following:
-    # case is "artist" or "release"
+    # given single Information object
     # slot 0 is json location
     # slot 1 is name of artist
     # slot 2 is dict of releases
-    # keys are release titles
+        # keys are release titles
     # values are successful songs in those releases
 
     # write the above to the json in layered dict with information given
