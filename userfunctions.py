@@ -60,19 +60,18 @@ Change the settings of the script.
 
 # Functions that take input from user, pass release pages onto parse functions
 
-# TODO implement cacheinput
-# needs to refer to clockknight want.txt, and then run
-# parses each line as new input, prompts user to clarify if each line is an artist or a user
-# if it is a url, note it and move on instead of actually asking
-
 def cacheinput():
     """Take multiple inputs from text file, ask user if given input is artist or release."""
+    # TODO implement cacheinput
+    # needs to refer to clockknight want.txt, and then run
+    # parses each line as new input, prompts user to clarify if each line is an artist or a user
+    # if it is a url, note it and move on instead of actually asking
     # Find text file with links to google searches of albums' songs
-    fileDir = input(
+    filedir = input(
         'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
 
     # Use readlines to seperate out the links of albums
-    cachearray = open(fileDir, 'r').readlines()
+    cachearray = open(filedir, 'r').readlines()
     # Run downloadlistofsongs
     # for item in resultArray:
     # ask user if its artist or album
@@ -111,6 +110,9 @@ def searchinput(mode, searchterm):
     searchprocess(word, searchterm)  # call helper function
 
 
+# Functions to parse information
+
+
 def searchprocess(word, searchterm):
     """Parse relevant information and call to appropriate function."""
     superjson = readhistory()
@@ -136,8 +138,8 @@ def searchprocess(word, searchterm):
             # Run different function mode chosen
             match word:
                 case 'release':
-                    success = downloadrelease("https://discogs.com" + div.a["href"])
-                    process = {word:success}
+                    success = processrelease("https://discogs.com" + div.a["href"])
+                    process = {word: success}
                     success = superjson
 
                 case 'artist':
@@ -148,7 +150,6 @@ def searchprocess(word, searchterm):
             # After above search runs, write to the history json then break
             writehistory(success)
             break
-
 
     # TODO Make Fail case here (this assumes first page has 0 matches)
     # Should print out unique results scraped, and give user chance to correct input
@@ -170,7 +171,7 @@ def parseartist(query):
         if not releases:
             break
         for release in releases:
-            success.update(downloadrelease(release))
+            success.update(processrelease(release))
         # go to next page of artist
         index += 1
 
@@ -194,7 +195,7 @@ def parseartistpage(query):
     return results
 
 
-def downloadrelease(query):
+def processrelease(query):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     infodict = {}
     success = {"artists": {}}
@@ -327,6 +328,7 @@ def downloadlistofsongs(infodict):
 
     return successfulsongs
 
+
 # todo implement update
 def update(jsonarray):
     """Check releases and artists for previously undownloaded songs. Call writehistory."""
@@ -348,6 +350,8 @@ def downloadsong(ytobj, infodict):
     cleanname = cleanname[:-1] + '3'  # change where cleanname points
     clip.write_audiofile(cleanname, logger=None)  # write audio to an mp3 file
     os.remove(video)  # delete old mp4
+
+    # TODO update below statement to check infodict.albumname default value
 
     if "albumname" in infodict:
         tagsong(cleanname, infodict)
@@ -381,7 +385,7 @@ def tagsong(target, infodict):
     tagtarget.save(target)
 
 
-# Helper functions
+# Helper functions,
 
 def writable(rewrite):
     """Return given string, after removing all characters that would cause errors."""
@@ -455,6 +459,7 @@ def checkhistory():
 
     return open(historydir)
 
+
 # TODO implement writehistory
 def writehistory(valuearray):
     """Update values in history json with given values."""
@@ -463,11 +468,12 @@ def writehistory(valuearray):
     # slot 0 is json location
     # slot 1 is name of artist
     # slot 2 is dict of releases
-        # keys are release titles
-        # values are successful songs in those releases
+    # keys are release titles
+    # values are successful songs in those releases
 
     # write the above to the json in layered dict with information given
     return 0
+
 
 # TODO implement readhistory
 def readhistory():
