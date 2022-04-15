@@ -85,8 +85,8 @@ def writehistory(giveninfo):
     # take most recent version of
     newthing = readhistory()
 
-    newthing[giveninfo.artist] =
-    newthing["artist"]["album"] = giveninfo.album
+    newthing[giveninfo.artist] = {}
+    newthing[giveninfo.artist][giveninfo.album] = giveninfo.songs
 
 
 # TODO implement readhistory

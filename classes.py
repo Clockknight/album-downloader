@@ -1,5 +1,3 @@
-from main import *
-
 class Information:
     album = ''
     artist = ''
@@ -17,7 +15,7 @@ class Information:
 
     def __init__(self):
         # TODO make default values for variables (through new Information class function?)
-        return 0
+        album = ''
 
     def urlinit(self):
         self.album = False

@@ -1,5 +1,15 @@
-from main import *
+import eyed3
+import urllib
+import pytube
+import requests
+import shutil
 
+
+from pytube import YouTube
+from bs4 import BeautifulSoup
+from moviepy.editor import *
+from classes import *
+from helperfunctions import *
 
 def optionselect():
     """Text menu for user to choose option"""
@@ -222,6 +232,7 @@ def processrelease(query):
     infoobject.songs = songlistin(soup)
 
     # Initialize the artist's value in the success dict as a dict
+
     success = {}
     success = success[infoobject.artist[infoobject.album]] = downloadlistofsongs(infoobject)
 
@@ -263,7 +274,8 @@ def downloadlistofsongs(infoobject):
             print('\r\t\tAttempting video ' + str(videos - loop + 1) + '/' + str(videos), end='\r', flush=True)
             loop -= 1
             try:
-                videoname = video.streams[0].title.split()
+                videoname = video.title.split()
+
             except Exception as e:
                 print(e)
                 continue  # tryexcept for livestreams
