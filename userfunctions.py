@@ -1,15 +1,4 @@
-import eyed3
-import urllib
-import pytube
-import requests
-import json
-import shutil
-import re
-from classes import *
-from pytube import Search
-from pytube import YouTube
-from bs4 import BeautifulSoup
-from moviepy.editor import *
+from main import *
 
 
 def optionselect():
@@ -82,17 +71,16 @@ def cacheinput():
 
 def urlinput():
     """Download given YouTube URL as MP3."""
-    dirstorage = "URL Downloads"
-    # TODO replace all instance of infodict with reference to a Information class
-    infodict = {"dirstorage": dirstorage}
-    os.makedirs(dirstorage, exist_ok=True)  # Make the folder
+    # TODO replace all instance of infoobject with reference to a Information class
+    infoobject = Information().urlinit()
+    os.makedirs(infoobject.dirstorage, exist_ok=True)  # Make the folder
     url = input('\nPlease input the url of the video you want to download.\n\t')
 
     try:
-        # Declare ytobj now to declare infodict[albumart] as the youtube thumbnail
+        # Declare ytobj now to declare infoobject.albumart as the youtube thumbnail
         ytobj = YouTube(url)
-        infodict["albumart"] = ytobj.thumbnail_url
-        downloadsong(ytobj, infodict)
+        infoobject.albumart = ytobj.thumbnail_url
+        downloadsong(ytobj, infoobject)
     except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
         input("Invalid URL. Press Enter to return to the main menu.")
 
@@ -135,12 +123,14 @@ def searchprocess(word, searchterm):
         # TODO Check if multiple versions from different artists exist, get one with most songs
         result = div.find('h4').find('a')['title'].lower()
         if result == searchterm:  # compare input to card's title
+            # TODO run on more than first release matched (get every unique song title returned)
             # Run different function mode chosen
             match word:
                 case 'release':
                     success = processrelease("https://discogs.com" + div.a["href"])
                     process = {word: success}
                     success = superjson
+                    # TODO Make Fail case here (would mean first page has 0 matches)
 
                 case 'artist':
                     # Only artist mode has multipage support (Not an issue yet?)
@@ -151,12 +141,12 @@ def searchprocess(word, searchterm):
             writehistory(success)
             break
 
-    # TODO Make Fail case here (this assumes first page has 0 matches)
     # Should print out unique results scraped, and give user chance to correct input
 
 
 def parseartist(query):
     """Parse artist, calling parseartistpage for each page. Return formatted list of songs downloaded."""
+    # TODO include method to get releases the artist is only credited in
     index = 1
     success = {}
 
@@ -197,10 +187,10 @@ def parseartistpage(query):
 
 def processrelease(query):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
-    infodict = {}
+    infoobject = Information()
     success = {"artists": {}}
 
-    infodict["history"] = checkhistory()
+    infoobject.history = checkhistory()
 
     #  tryexcept for passed query
     try:
@@ -212,55 +202,53 @@ def processrelease(query):
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artistname = name.find('a').text
-    infodict["artistname"] = artistname  # separate artist
-    infodict['albumname'] = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
+    infoobject.artistname = artistname  # separate artist
+    infoobject.albumname = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
-    print('\n\tDownloading Album - ' + infodict["albumname"])
+    print('\n\tDownloading Album - ' + infoobject.albumname)
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
     try:
-        infodict["coverart"] = requests.get("https://discogs.com" + coverart.find('a')['href'])
+        infoobject.coverart = requests.get("https://discogs.com" + coverart.find('a')['href'])
     except:
-        print('Warning: Problem getting album art - ' + infodict[
-            "albumname"])  # Let the user know the album art isn't available
-        infodict["coverart"] = 'fail'  # set it to fail for mp3 tag check
+        # Let the user know the album art isn't available
+        print('Warning: Problem getting album art - ' + infoobject.albumname)
+        infoobject.coverart = 'fail'  # set it to fail for mp3 tag check
 
     # Preparing directory to download song
-    infodict["dirstorage"] = os.path.join(writable(infodict["artistname"]),
-                                          writable(infodict[
-                                                       "albumname"]))  # create folder for artist, and subfolder for release
-    os.makedirs(infodict["dirstorage"], exist_ok=True)  # Make the folder
+    # create folder for artist, and subfolder for release
+    infoobject.distorage = os.path.join(writable(infoobject.artistname), writable(infoobject.albumname))
+    os.makedirs(infoobject.distorage, exist_ok=True)  # Make the folder
 
-    infodict["songs"] = songlistin(soup)
+    infoobject.songs = songlistin(soup)
 
     # Initialize the artist's value in the success dict as a dict
-    success = success[infodict["artistname"]]
     success = {}
-
-    success[infodict["albumname"]] = downloadlistofsongs(infodict)
+    success = success[infoobject.artist[infoobject.album]] = downloadlistofsongs(infoobject)
 
     # TODO Save album or add it to artist in history.json
 
     return success
 
 
-def downloadlistofsongs(infodict):
+def downloadlistofsongs(infoobject):
     """Send pytube YouTube objects to download song. Return formatted dict of success songs"""
     successfulsongs = []
-    infodict["songcount"] = 0
-    infodict["totalcount"] = len(infodict["songs"])
+    infoobject.songcount = 0
+    infoobject.totalcount = len(infoobject.songs)
     # mega Codeblock to download array's songs
     # Use album name + song name + "song" in youtube search
 
-    for songname in infodict["songs"]:
-        infodict["cursongname"] = songname
+    for songname in infoobject.songs:
+        infoobject.cursong = songname
         print('\t\tDownloading - ' + songname)
 
-        res = Search(infodict["albumname"] + ' song ' + songname).results
+        res = Search(infoobject.album + ' song ' + songname).results
         loop = len(res)
-        songlen = parsetime(infodict["songs"][songname])
-        # check at least 100 videos
+        songlen = parsetime(infoobject.songs[songname])
+
         '''
         Codeblock that doesnt work, pytube get_next_results() raises indexerror
+        # loop to check at least 100 videos, get_next_results doesnt pull consistent amount of videos
         while True:
             res.get_next_results()
             loop = len(res.results)
@@ -290,15 +278,15 @@ def downloadlistofsongs(infodict):
                 continue
 
             # TODO Improve this filter further by somehow compacting into a single regex, with the same restrictions
-            for word in infodict["cursongname"].split():
+            for word in infoobject.cursong.split():
                 if mismatchbool or (word.lower() not in videoname):
                     mismatchbool = True
                     break
-            for word in infodict["albumname"].split():
+            for word in infoobject.album.split():
                 if mismatchbool or (word.lower() not in videoname):
                     mismatchbool = True
                     break
-            for word in infodict["artistname"].split():
+            for word in infoobject.artist.split():
                 if mismatchbool or (word.lower() not in videoname):
                     mismatchbool = True
                     break
@@ -317,11 +305,11 @@ def downloadlistofsongs(infodict):
         cleanname = writable(songname)  # remove chars that will mess up processing below
 
         # cleanname is directory of mp4
-        cleanname = os.path.abspath(os.path.join(infodict["dirstorage"], cleanname + '.mp4'))
-        infodict["songcount"] += 1  # increment songcount once song is found, before downloading it
+        cleanname = os.path.abspath(os.path.join(infoobject.distorage, cleanname + '.mp4'))
+        infoobject.songcount += 1  # increment songcount once song is found, before downloading it
 
         try:
-            if downloadsong(video, infodict): successfulsongs.append(songname)
+            if downloadsong(video, infoobject): successfulsongs.append(songname)
         except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:  # Skip to next song if above block raises an error
             print('Warning: issue downloading from YouTube - ' + songname)
             continue
@@ -337,12 +325,12 @@ def update(jsonarray):
 
 # Functions that download albums or songs, after parsing info
 
-def downloadsong(ytobj, infodict):
+def downloadsong(ytobj, infoobject):
     """Download MP3 from YouTube object. Return bool based on if download was successful."""
     video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
     title = video.title
     title = writable(title)
-    cleanname = os.path.abspath(os.path.join(infodict["dirstorage"], title)) + '.mp4'
+    cleanname = os.path.abspath(os.path.join(infoobject.distorage, title)) + '.mp4'
     video.download(filename=cleanname)
 
     clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
@@ -351,27 +339,27 @@ def downloadsong(ytobj, infodict):
     clip.write_audiofile(cleanname, logger=None)  # write audio to an mp3 file
     os.remove(video)  # delete old mp4
 
-    # TODO update below statement to check infodict.albumname default value
+    # TODO update below statement to check infoobject.albumname default value
 
-    if "albumname" in infodict:
-        tagsong(cleanname, infodict)
+    if "albumname" in infoobject:
+        tagsong(cleanname, infoobject)
 
     return os.path.exists(cleanname)
 
 
-def tagsong(target, infodict):
+def tagsong(target, infoobject):
     """Tag MP3 with given information."""
     tagtarget = eyed3.load(target)  # creates mp3audiofile at downloaded mp3
     tagtarget = tagtarget.tag
-    tagtarget.title = infodict["cursongname"]
-    tagtarget.artist = infodict["artistname"]
-    tagtarget.album_artist = infodict["artistname"]
-    tagtarget.album = infodict["albumname"]
-    tagtarget.track_num = (infodict["songcount"], infodict["totalcount"])
-    if infodict["coverart"] != 'fail':  # Check if coverart is actually valid
-        coverart = infodict["coverart"].url
+    tagtarget.title = infoobject.cursong
+    tagtarget.artist = infoobject.artist
+    tagtarget.album_artist = infoobject.artist
+    tagtarget.album = infoobject.album
+    tagtarget.track_num = (infoobject.songcount, infoobject.totalcount)
+    if infoobject.art != 'fail':  # Check if coverart is actually valid
+        coverart = infoobject.art.url
 
-        filename = os.path.join(infodict["dirstorage"], infodict["albumname"] + ".jpeg")
+        filename = os.path.join(infoobject.distorage, infoobject.album + ".jpeg")
         r = requests.get(coverart, stream=True)
         r.raw.decode_content = True
 
@@ -380,7 +368,7 @@ def tagsong(target, infodict):
 
         with open(filename, "rb") as f:
             tagtarget.images.set(3, f.read(), "image/jpeg")
-        infodict["coverart"] = "fail"
+        infoobject.art = "fail"
 
     tagtarget.save(target)
 
