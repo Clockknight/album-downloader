@@ -6,3 +6,5 @@ class Information:
 
     def __int__(self):
         albumartist = ''
+
+
