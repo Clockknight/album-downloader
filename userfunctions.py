@@ -1,15 +1,15 @@
 import eyed3
 import urllib
-import pytube
 import requests
 import shutil
+import pytube
 
-
-from pytube import YouTube
+from pytube import YouTube, Search
 from bs4 import BeautifulSoup
 from moviepy.editor import *
 from classes import *
 from helperfunctions import *
+from pydub import AudioSegment, effects
 
 def optionselect():
     """Text menu for user to choose option"""
@@ -87,9 +87,9 @@ def urlinput():
     url = input('\nPlease input the url of the video you want to download.\n\t')
 
     try:
-        # Declare ytobj now to declare infoobject.albumart as the youtube thumbnail
+        # Declare ytobj now to declare infoobject.art as the youtube thumbnail
         ytobj = YouTube(url)
-        infoobject.albumart = ytobj.thumbnail_url
+        infoobject.art = ytobj.thumbnail_url
         downloadsong(ytobj, infoobject)
     except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
         input("Invalid URL. Press Enter to return to the main menu.")
@@ -212,29 +212,30 @@ def processrelease(query):
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artistname = name.find('a').text
-    infoobject.artistname = artistname  # separate artist
-    infoobject.albumname = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
+    infoobject.artist = artistname  # separate artist
+    infoobject.album = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
-    print('\n\tDownloading Album - ' + infoobject.albumname)
+    print('\n\tDownloading Album - ' + infoobject.album)
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
     try:
-        infoobject.coverart = requests.get("https://discogs.com" + coverart.find('a')['href'])
+        infoobject.art = requests.get("https://discogs.com" + coverart.find('a')['href'])
     except:
         # Let the user know the album art isn't available
-        print('Warning: Problem getting album art - ' + infoobject.albumname)
-        infoobject.coverart = 'fail'  # set it to fail for mp3 tag check
+        print('\t\tWarning: Problem getting album art - ' + infoobject.album)
+        infoobject.art = 'fail'  # set it to fail for mp3 tag check
 
     # Preparing directory to download song
     # create folder for artist, and subfolder for release
-    infoobject.distorage = os.path.join(writable(infoobject.artistname), writable(infoobject.albumname))
-    os.makedirs(infoobject.distorage, exist_ok=True)  # Make the folder
+    infoobject.dirstorage = os.path.join(writable(infoobject.artist), writable(infoobject.album))
+    os.makedirs(infoobject.dirstorage, exist_ok=True)  # Make the folder
 
     infoobject.songs = songlistin(soup)
 
     # Initialize the artist's value in the success dict as a dict
 
     success = {}
-    success = success[infoobject.artist[infoobject.album]] = downloadlistofsongs(infoobject)
+    success[infoobject.artist] = {}
+    success[infoobject.artist][infoobject.album] = downloadlistofsongs(infoobject)
 
     # TODO Save album or add it to artist in history.json
 
@@ -247,15 +248,17 @@ def downloadlistofsongs(infoobject):
     infoobject.songcount = 0
     infoobject.totalcount = len(infoobject.songs)
     # mega Codeblock to download array's songs
-    # Use album name + song name + "song" in youtube search
+    # Use album name + song name + "song" in YouTube search
 
     for songname in infoobject.songs:
         infoobject.cursong = songname
         print('\t\tDownloading - ' + songname)
 
-        res = Search(infoobject.album + ' song ' + songname).results
+        res = Search(infoobject.album + ' ' + infoobject.artist + ' song ' + songname).results
         loop = len(res)
-        songlen = parsetime(infoobject.songs[songname])
+        songlen = infoobject.songs[songname]
+        if songlen == 0:
+            print('\r\t\tNo song length found. Result may be inaccurate.')
 
         '''
         Codeblock that doesnt work, pytube get_next_results() raises indexerror
@@ -285,7 +288,7 @@ def downloadlistofsongs(infoobject):
             vidlen = video.length
 
             # Filter for video codeblock
-            if vidlen not in range(int(songlen * .95), int(songlen * 1.25)):
+            if vidlen not in range(int(songlen * .95), int(songlen * 1.25)) and songlen != 0:
                 mismatchbool = True
                 continue
 
@@ -310,14 +313,9 @@ def downloadlistofsongs(infoobject):
             print('Warning: No result found within parameters - ' + songname)  # let user know about this
             continue  # move onto next songname in this case
 
-        print('\r\t\tDownloading...', end="\n", flush=True)
-
-        # if check to see if loop is working
-
-        cleanname = writable(songname)  # remove chars that will mess up processing below
+        print('\r\t\tDownloading...', end="\r", flush=True)
 
         # cleanname is directory of mp4
-        cleanname = os.path.abspath(os.path.join(infoobject.distorage, cleanname + '.mp4'))
         infoobject.songcount += 1  # increment songcount once song is found, before downloading it
 
         try:
@@ -338,11 +336,12 @@ def update(jsonarray):
 # Functions that download albums or songs, after parsing info
 
 def downloadsong(ytobj, infoobject):
-    """Download MP3 from YouTube object. Return bool based on if download was successful."""
+    """Download MP3 from YouTube object. Return bool based on if download was successful.
+    Download as MP4 for now. Downloading the MP3 stream given causes issues when trying to edit MP3 tags."""
     video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
     title = video.title
     title = writable(title)
-    cleanname = os.path.abspath(os.path.join(infoobject.distorage, title)) + '.mp4'
+    cleanname = os.path.abspath(os.path.join(infoobject.dirstorage, title)) + '.mp4'
     video.download(filename=cleanname)
 
     clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
@@ -351,10 +350,10 @@ def downloadsong(ytobj, infoobject):
     clip.write_audiofile(cleanname, logger=None)  # write audio to an mp3 file
     os.remove(video)  # delete old mp4
 
-    # TODO update below statement to check infoobject.albumname default value
-
-    if "albumname" in infoobject:
+    if infoobject.album:
         tagsong(cleanname, infoobject)
+
+    print('\r', end='', flush=True)
 
     return os.path.exists(cleanname)
 
@@ -371,7 +370,7 @@ def tagsong(target, infoobject):
     if infoobject.art != 'fail':  # Check if coverart is actually valid
         coverart = infoobject.art.url
 
-        filename = os.path.join(infoobject.distorage, infoobject.album + ".jpeg")
+        filename = os.path.join(infoobject.dirstorage, infoobject.album + ".jpeg")
         r = requests.get(coverart, stream=True)
         r.raw.decode_content = True
 
@@ -382,6 +381,8 @@ def tagsong(target, infoobject):
             tagtarget.images.set(3, f.read(), "image/jpeg")
         infoobject.art = "fail"
 
+        os.remove(filename)
+
     tagtarget.save(target)
 
 
@@ -391,7 +392,7 @@ def writable(rewrite):
     """Return given string, after removing all characters that would cause errors."""
     pattern = r'[:<>\*\?\\\/|\"]'
     rewrite = re.sub(pattern, "", rewrite)
-    return rewrite
+    return rewrite.strip()
 
 
 def songlistin(releasesoup):
@@ -412,8 +413,12 @@ def songlistin(releasesoup):
             # 3rd tds is the song name
             name = tds[2].find("span").text
 
-            # 4th tds is the song length
-            length = tds[3].text
+            # TODO make exception for update() with songs with 0 songlen
+            try:
+                # 4th tds is the song length
+                length = parsetime(tds[3].text)
+            except IndexError:
+                length = 0
 
             result[name] = length
 
