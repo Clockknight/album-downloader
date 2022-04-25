@@ -147,7 +147,11 @@ def searchprocess(word, searchterm):
                     success = parseartist("https://discogs.com" + div.a["href"] + "?page=")
                     # TODO Make this write to json just the artist, since no results were found
 
+
+
+
             # After above search runs, write to the history json then break
+            # Both return a success object
             writehistory(success)
             break
 
@@ -470,11 +474,7 @@ def writehistory(valuearray):
     """Update values in history json with given values."""
     # assume the following:
     # given single Information object
-    # slot 0 is json location
-    # slot 1 is name of artist
-    # slot 2 is dict of releases
-        # keys are release titles
-    # values are successful songs in those releases
+
 
     # write the above to the json in layered dict with information given
     return 0
