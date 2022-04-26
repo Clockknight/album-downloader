@@ -201,6 +201,7 @@ def parseartistpage(query):
 
 def processrelease(query):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
+    # TODO Figure out how to deal with multiple releases with the same name EG madeon - adventure
     infoobject = Information()
     success = {"artists": {}}
 
@@ -425,35 +426,6 @@ def songlistin(releasesoup):
                 length = 0
 
             result[name] = length
-
-    return result
-
-
-def parsetime(instring):
-    """Take hh:mm:ss string input, return int value in seconds."""
-    # TODO raise error if string is not in format of digits and colons
-    timere = re.compile('\d+')
-    colre = re.findall(':', instring)
-    iter = len(colre)
-    result = 0
-
-    for value in re.findall(timere, instring):
-        value = int(value)
-        match (iter):
-            # if 2nd iteration, then assume previous numbers are in seconds, convert to  minutes
-            case 1:
-                value *= 60
-
-            # if 3rd iteration, then assume previous numbers are in minutes, convert to hours
-            case 2:
-                value *= 60
-
-            # if 4th iteration, then assume previous numbers are in hours, convert to days
-            case 3:
-                value *= 24
-
-        result += value
-        iter -= 1
 
     return result
 
