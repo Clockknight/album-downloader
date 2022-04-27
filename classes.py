@@ -7,7 +7,7 @@ class Information:
         self.history = {}
         self.cursong = ''
 
-        self.songs = []
+        self.songs = {}
 
         self.songcount = 0
         self.totalcount = 0

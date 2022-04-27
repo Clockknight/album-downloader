@@ -323,11 +323,15 @@ def downloadlistofsongs(infoobject):
         # cleanname is directory of mp4
         infoobject.songcount += 1  # increment songcount once song is found, before downloading it
 
-        try:
-            if downloadsong(video, infoobject): successfulsongs.append(songname)
-        except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:  # Skip to next song if above block raises an error
-            print('Warning: issue downloading from YouTube - ' + songname)
-            continue
+        if songname in infoobject.songs:
+            print('\r\t\tSong Previously Downloaded', end="\r", flush=True)
+            successfulsongs.append(songname)
+        else:
+            try:
+                if downloadsong(video, infoobject): successfulsongs.append(songname)
+            except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:  # Skip to next song if above block raises an error
+                print('Warning: issue downloading from YouTube - ' + songname)
+                continue
 
     return successfulsongs
 
