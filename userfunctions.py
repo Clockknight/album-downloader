@@ -113,7 +113,7 @@ def searchinput(mode, searchterm):
 
 def searchprocess(word, searchterm):
     """Parse relevant information and call to appropriate function."""
-    superjson = readhistory()
+    histjson = readhistory()
     resultartiststhatarentmatching = []
     searchterm = searchterm.lower()
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
@@ -138,8 +138,6 @@ def searchprocess(word, searchterm):
             match word:
                 case 'release':
                     success = processrelease("https://discogs.com" + div.a["href"])
-                    process = {word: success}
-                    success = superjson
                     # TODO Make Fail case here (would mean first page has 0 matches)
 
                 case 'artist':
@@ -203,8 +201,6 @@ def processrelease(query):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     # TODO Figure out how to deal with multiple releases with the same name EG madeon - adventure
     infoobject = Information()
-    success = {"artists": {}}
-
     infoobject.history = checkhistory()
 
     #  tryexcept for passed query
@@ -244,7 +240,8 @@ def processrelease(query):
 
     # TODO Save album or add it to artist in history.json
 
-    return success
+    return infoobject
+
 
 
 def downloadlistofsongs(infoobject):
@@ -268,11 +265,9 @@ def downloadlistofsongs(infoobject):
         '''
         Codeblock that doesnt work, pytube get_next_results() raises indexerror
         # loop to check at least 100 videos, get_next_results doesnt pull consistent amount of videos
-        while True:
+        while loop < 100:
             res.get_next_results()
-            loop = len(res.results)
-
-            if loop >= 100: break
+            loop = len(res.results)            
         '''
 
         videos = loop
@@ -446,7 +441,7 @@ def checkhistory():
 
 
 # TODO implement writehistory
-def writehistory(valuearray):
+def writehistory(infoobj):
     """Update values in history json with given values."""
     # assume the following:
     # given single Information object
