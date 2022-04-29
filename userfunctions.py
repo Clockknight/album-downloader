@@ -113,7 +113,6 @@ def searchinput(mode, searchterm):
 
 def searchprocess(word, searchterm):
     """Parse relevant information and call to appropriate function."""
-    histjson = readhistory()
     resultartiststhatarentmatching = []
     searchterm = searchterm.lower()
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
@@ -442,16 +441,22 @@ def checkhistory():
 
 # TODO implement writehistory
 def writehistory(infoobj):
-    """Update values in history json with given values."""
-    # assume the following:
-    # given single Information object
+    """Assume:
+        Infoobj is an Information object with information on new songs that have been downloaded.
+    Update values in history json with given values."""
 
+
+    f = open(infoobj.history)
+
+    oldhist = readhistory(f)
 
     # write the above to the json in layered dict with information given
     return 0
 
 
 # TODO implement readhistory
-def readhistory():
+def readhistory(file):
     """Return history.json results as a dict."""
+
+
     return 0
