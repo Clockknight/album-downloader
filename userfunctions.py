@@ -1,3 +1,5 @@
+from json import JSONDecodeError
+
 import eyed3
 import urllib
 import requests
@@ -445,8 +447,10 @@ def writehistory(infoobj):
         Infoobj is an Information object with information on new songs that have been downloaded.
     Update values in history json with given values."""
 
-
-    f = open(infoobj.history)
+    try:
+        f = open(infoobj.history)
+    except JSONDecodeError:
+        pass
 
     oldhist = readhistory(f)
 
