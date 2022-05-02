@@ -1,4 +1,4 @@
-'''import unittest
+"""import unittest
 
 
 class MyTestCase(unittest.TestCase):
@@ -7,16 +7,16 @@ class MyTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()'''
+    unittest.main()"""
 
 from userfunctions import *
+import shutil
 
-
+urlinput("https://www.youtube.com/watch?v=BKUa0ISxhvQ")
 
 searchinput(1, "20 Percent Cooler")
 searchinput(0, "Ken Ashcorp")
+clearhist()
 
-input("")
-
-f = open("history.json", 'w')
-f.write("")
+searchinput(0, "kEn AsHCoRp")
+clearhist()
