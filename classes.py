@@ -11,15 +11,14 @@ class Information:
 
         # Vars for storing directories to files
         self.histstorage = ''
-        # TODO rename .dirstorage into something less generic
-        self.dirstorage = ''
+        self.targetstorage = ''
 
         self.songcount = 0
         self.totalcount = 0
 
     def urlinit(self):
         self.album = False
-        self.dirstorage = "URL Downloads"
+        self.targetstorage = "URL Downloads"
 
     def summary(self):
 

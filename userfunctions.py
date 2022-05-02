@@ -87,8 +87,7 @@ def urlinput():
     """Download given YouTube URL as MP3."""
     # TODO replace all instance of infoobject with reference to a Information class
     infoobject = Information().urlinit()
-    # TODO rename .dirstorage into something less generic
-    os.makedirs(infoobject.dirstorage, exist_ok=True)  # Make the folder
+    os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
     url = input('\nPlease input the url of the video you want to download.\n\t')
 
     try:
@@ -229,8 +228,8 @@ def processrelease(query):
 
     # Preparing directory to download song
     # create folder for artist, and subfolder for release
-    infoobject.dirstorage = os.path.join(writable(infoobject.artist), writable(infoobject.album))
-    os.makedirs(infoobject.dirstorage, exist_ok=True)  # Make the folder
+    infoobject.targetstorage = os.path.join(writable(infoobject.artist), writable(infoobject.album))
+    os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
 
     infoobject.songs = songlistin(soup)
     infoobject.history = readhistory(infoobject.histstorage, infoobject.artist)
@@ -342,7 +341,7 @@ def downloadsong(ytobj, infoobject):
     video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
     title = video.title
     title = writable(title)
-    cleanname = os.path.abspath(os.path.join(infoobject.dirstorage, title)) + '.mp4'
+    cleanname = os.path.abspath(os.path.join(infoobject.targetstorage, title)) + '.mp4'
     video.download(filename=cleanname)
 
     clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
@@ -371,7 +370,7 @@ def tagsong(target, infoobject):
     if infoobject.art != 'fail':  # Check if coverart is actually valid
         coverart = infoobject.art.url
 
-        filename = os.path.join(infoobject.dirstorage, infoobject.album + ".jpeg")
+        filename = os.path.join(infoobject.targetstorage, infoobject.album + ".jpeg")
         r = requests.get(coverart, stream=True)
         r.raw.decode_content = True
 
