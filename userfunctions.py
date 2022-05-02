@@ -13,6 +13,7 @@ from classes import *
 from helperfunctions import *
 from pydub import AudioSegment, effects
 
+
 def optionselect():
     """Text menu for user to choose option"""
     option = input('''
@@ -147,9 +148,6 @@ def searchprocess(word, searchterm):
                     success = parseartist("https://discogs.com" + div.a["href"] + "?page=")
                     # TODO Make this write to json just the artist, since no results were found
 
-
-
-
             # After above search runs, write to the history json then break
             # Both return a success object
             writehistory(success)
@@ -175,7 +173,8 @@ def parseartist(query):
         if not releases:
             break
         for release in releases:
-            success.update(processrelease(release))
+            test = processrelease(release)
+            success.update(test.success)
         # go to next page of artist
         index += 1
 
@@ -233,22 +232,17 @@ def processrelease(query):
     os.makedirs(infoobject.dirstorage, exist_ok=True)  # Make the folder
 
     infoobject.songs = songlistin(soup)
-
-    # Initialize the artist's value in the success dict as a dict
-
-    success = {}
-    success[infoobject.artist] = {}
-    success[infoobject.artist][infoobject.album] = downloadlistofsongs(infoobject)
+    infoobject.history = readhistory(infoobject.histstorage, infoobject.artist)
+    infoobject.success = {infoobject.album: downloadlistofsongs(infoobject)}
 
     # TODO Save album or add it to artist in history.json
 
     return infoobject
 
 
-
 def downloadlistofsongs(infoobject):
     """Send pytube YouTube objects to download song. Return formatted dict of success songs"""
-    successfulsongs = []
+    successfulsongs = {}
     infoobject.songcount = 0
     infoobject.totalcount = len(infoobject.songs)
     # mega Codeblock to download array's songs
@@ -320,12 +314,12 @@ def downloadlistofsongs(infoobject):
         # cleanname is directory of mp4
         infoobject.songcount += 1  # increment songcount once song is found, before downloading it
 
-        if songname in infoobject.songs:
+        if songname in infoobject.history:
             print('\r\t\tSong Previously Downloaded', end="\r", flush=True)
-            successfulsongs.append(songname)
         else:
+            # Add song to successful songs if downloadsong returns true
             try:
-                if downloadsong(video, infoobject): successfulsongs.append(songname)
+                if downloadsong(video, infoobject): successfulsongs.update({songname: songlen})
             except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:  # Skip to next song if above block raises an error
                 print('Warning: issue downloading from YouTube - ' + songname)
                 continue
@@ -342,7 +336,7 @@ def update(jsonarray):
 # Functions that download albums or songs, after parsing info
 
 def downloadsong(ytobj, infoobject):
-    """Download MP3 from YouTube object. Return bool based on if download was successful.
+    """Download MP3 from YouTube object. Return Bool based on if download was successful.
     Download as MP4 for now. Downloading the MP3 stream given causes issues when trying to edit MP3 tags."""
     video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
     title = video.title
@@ -432,7 +426,10 @@ def songlistin(releasesoup):
 
 
 def checkhistory():
-    """Write history.json if it doesn't exist yet. Return the json file opened."""
+    """Assume:
+        User wants history file at location. Location informed by Settings object.
+    Write history.json if it doesn't exist yet. Return the directory to the file opened."""
+    # TODO make this informed by settings object
     historydir = "history.json"
 
     if not os.path.exists(historydir):
@@ -446,33 +443,37 @@ def checkhistory():
 def writehistory(infoobj):
     """Assume:
         Infoobj is an Information object with information on new songs that have been downloaded.
+        History.json exists prior to now
     Update values in history json with given values."""
-    f = open(infoobj.histstorage, 'r+')
+    dir = infoobj.histstorage
+    artist = infoobj.artist
     newhist = infoobj.songs
 
     try:
-        #oldhist = readhistory(f)
-        #oldhist = oldhist[infoobj.artist]
-        oldhist = {"Made up": 100}
-    except JSONDecodeError:
+        totalhist = readhistory(dir, artist)
+    # except for general json issue
+    except JSONDecodeError as e:
+        # TODO how to handle empty file?
+        totalhist = {}
         pass
 
+    # merge and format old and new lists of songs downloaded.
+    totalhist.update(newhist)
+    result = json.dumps({infoobj.artist: totalhist}, sort_keys=True, indent=4)
 
-
-    newhist.update(oldhist)
-    result = {infoobj.artist : newhist}
-
-
-    print(json.dumps(oldhist))
-    print(json.dumps(newhist))
-    print(json.dumps(result))
-    # write the above to the json in layered dict with information given
-
+    # write result to the file
+    f = open(dir, 'w')
+    f.write(result)
 
 
 # TODO implement readhistory
-def readhistory(file):
-    """Return history.json results as a dict."""
-    result = {}
+def readhistory(dir, artist=None):
+    """Return artist's results from history.json as a dict.
+    If no artist is specified, return all results."""
+    f = open(dir, 'r')
+    result = json.load(f)
+    if artist is None:
+        return result
+    else:
+        return result[artist]
 
-    return result

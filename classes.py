@@ -5,10 +5,11 @@ class Information:
         self.art = ''
         self.cursong = ''
 
-
         self.songs = {}
+        self.success = {}
+        self.history = {}
 
-        #Vars for storing directories to files
+        # Vars for storing directories to files
         self.histstorage = ''
         # TODO rename .dirstorage into something less generic
         self.dirstorage = ''
