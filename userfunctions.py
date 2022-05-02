@@ -85,6 +85,7 @@ def urlinput():
     """Download given YouTube URL as MP3."""
     # TODO replace all instance of infoobject with reference to a Information class
     infoobject = Information().urlinit()
+    # TODO rename .dirstorage into something less generic
     os.makedirs(infoobject.dirstorage, exist_ok=True)  # Make the folder
     url = input('\nPlease input the url of the video you want to download.\n\t')
 
@@ -202,7 +203,7 @@ def processrelease(query):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     # TODO Figure out how to deal with multiple releases with the same name EG madeon - adventure
     infoobject = Information()
-    infoobject.history = checkhistory()
+    infoobject.histstorage = checkhistory()
 
     #  tryexcept for passed query
     try:
@@ -438,7 +439,7 @@ def checkhistory():
         with open(historydir, 'w') as f:
             json.dump({}, f)
 
-    return open(historydir)
+    return historydir
 
 
 # TODO implement writehistory
@@ -446,21 +447,32 @@ def writehistory(infoobj):
     """Assume:
         Infoobj is an Information object with information on new songs that have been downloaded.
     Update values in history json with given values."""
+    f = open(infoobj.histstorage, 'r+')
+    newhist = infoobj.songs
 
     try:
-        f = open(infoobj.history)
+        #oldhist = readhistory(f)
+        #oldhist = oldhist[infoobj.artist]
+        oldhist = {"Made up": 100}
     except JSONDecodeError:
         pass
 
-    oldhist = readhistory(f)
 
+
+    newhist.update(oldhist)
+    result = {infoobj.artist : newhist}
+
+
+    print(json.dumps(oldhist))
+    print(json.dumps(newhist))
+    print(json.dumps(result))
     # write the above to the json in layered dict with information given
-    return 0
+
 
 
 # TODO implement readhistory
 def readhistory(file):
     """Return history.json results as a dict."""
+    result = {}
 
-
-    return 0
+    return result

@@ -3,11 +3,15 @@ class Information:
         self.album = ''
         self.artist = ''
         self.art = ''
-        self.dirstorage = ''
-        self.history = ''
         self.cursong = ''
 
+
         self.songs = {}
+
+        #Vars for storing directories to files
+        self.histstorage = ''
+        # TODO rename .dirstorage into something less generic
+        self.dirstorage = ''
 
         self.songcount = 0
         self.totalcount = 0
@@ -18,7 +22,7 @@ class Information:
 
     def summary(self):
 
-        release = {self.artist:{}}
+        release = {self.artist: self.songs}
 
         return release
 
