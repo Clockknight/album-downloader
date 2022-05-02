@@ -1,4 +1,4 @@
-import unittest
+'''import unittest
 
 
 class MyTestCase(unittest.TestCase):
@@ -7,4 +7,16 @@ class MyTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main()'''
+
+from userfunctions import *
+
+
+
+searchinput(1, "20 Percent Cooler")
+searchinput(0, "Ken Ashcorp")
+
+input("")
+
+f = open("history.json", 'w')
+f.write("")

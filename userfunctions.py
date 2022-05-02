@@ -1,3 +1,4 @@
+import sys
 from json import JSONDecodeError
 
 import eyed3
@@ -45,9 +46,9 @@ Change the settings of the script.
         case '1':
             cacheinput()
         case '2':
-            searchinput(0, "")
+            searchinput(0)
         case '3':
-            searchinput(1, "")
+            searchinput(1)
         case '4':
             update()
         case '8':
@@ -99,14 +100,14 @@ def urlinput():
         input("Invalid URL. Press Enter to return to the main menu.")
 
 
-def searchinput(mode, searchterm):
+def searchinput(mode, searchterm=None):
     """Get user input for release or artist to search, then search it."""
     word = "artist"
     if mode == 1:
         word = "release"
 
     # Get input for artist/album name when no term is passed
-    if searchterm == "":
+    if searchterm is None:
         searchterm = input('\nPlease input the name of the ' + word + ' you want to search for.\n\t')
 
     searchprocess(word, searchterm)  # call helper function
@@ -449,13 +450,7 @@ def writehistory(infoobj):
     artist = infoobj.artist
     newhist = infoobj.songs
 
-    try:
-        totalhist = readhistory(dir, artist)
-    # except for general json issue
-    except JSONDecodeError as e:
-        # TODO how to handle empty file?
-        totalhist = {}
-        pass
+    totalhist = readhistory(dir, artist)
 
     # merge and format old and new lists of songs downloaded.
     totalhist.update(newhist)
@@ -471,8 +466,15 @@ def readhistory(dir, artist=None):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
     f = open(dir, 'r')
-    result = json.load(f)
-    if artist is None:
+
+    try:
+        result = json.load(f)
+    # except for general json issue
+    except JSONDecodeError:
+        # TODO how to handle empty file?
+        result = {}
+
+    if result == {} or artist is None:
         return result
     else:
         return result[artist]
