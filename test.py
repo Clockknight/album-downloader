@@ -15,6 +15,7 @@ import shutil
 urlinput("https://www.youtube.com/watch?v=BKUa0ISxhvQ")
 
 searchinput(1, "20 Percent Cooler")
+searchinput(1, "20 Percent Cooler")
 searchinput(0, "Ken Ashcorp")
 clearhist()
 

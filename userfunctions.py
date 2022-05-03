@@ -87,7 +87,7 @@ def urlinput(url=None):
     """Download given YouTube URL as MP3."""
     # TODO replace all instance of infoobject with reference to a Information class
     infoobject = Information()
-    infoobject.urlinit()
+    infoobject.init("url")
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
     if url is None:
         url = input('\nPlease input the url of the video you want to download.\n\t')
@@ -162,7 +162,7 @@ def parseartist(query):
     """Parse artist, calling parseartistpage for each page. Return formatted list of songs downloaded."""
     # TODO include method to get releases the artist is only credited in
     index = 1
-    success = {}
+    success = Information()
 
     while True:
         # store array of releases to download
@@ -175,8 +175,7 @@ def parseartist(query):
         if not releases:
             break
         for release in releases:
-            test = processrelease(release)
-            success.update(test.success)
+            success.success.update(processrelease(release).success)
         # go to next page of artist
         index += 1
 
@@ -200,9 +199,9 @@ def parseartistpage(query):
     return results
 
 
-def processrelease(query):
+def processrelease(query, infoobject=None):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
-    # TODO Figure out how to deal with multiple releases with the same name EG madeon - adventure
+    # TODO Figure out how to deal with multiple releases with the same name EX madeon - adventure
     infoobject = Information()
     infoobject.histstorage = checkhistory()
 
@@ -217,25 +216,25 @@ def processrelease(query):
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artistname = name.find('a').text
     infoobject.artist = artistname  # separate artist
-    infoobject.album = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
+    infoobject.release = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
-    print('\n\tDownloading Album - ' + infoobject.album)
+    print('\n\tDownloading Album - ' + infoobject.release)
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
     try:
         infoobject.art = requests.get("https://discogs.com" + coverart.find('a')['href'])
     except:
         # Let the user know the album art isn't available
-        print('\t\tWarning: Problem getting album art - ' + infoobject.album)
+        print('\t\tWarning: Problem getting album art - ' + infoobject.release)
         infoobject.art = 'fail'  # set it to fail for mp3 tag check
 
     # Preparing directory to download song
     # create folder for artist, and subfolder for release
-    infoobject.targetstorage = os.path.join(writable(infoobject.artist), writable(infoobject.album))
+    infoobject.targetstorage = os.path.join(writable(infoobject.artist), writable(infoobject.release))
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
 
     infoobject.songs = songlistin(soup)
     infoobject.history = readhistory(infoobject.histstorage, infoobject.artist)
-    infoobject.success = {infoobject.album: downloadlistofsongs(infoobject)}
+    infoobject.success = {infoobject.release: downloadlistofsongs(infoobject)}
 
     # TODO Save album or add it to artist in history.json
 
@@ -243,7 +242,8 @@ def processrelease(query):
 
 
 def downloadlistofsongs(infoobject):
-    """Send pytube YouTube objects to download song. Return formatted dict of success songs"""
+    """Send pytube YouTube objects to download song.
+    Return formatted dict of success songs, specifically for this release."""
     successfulsongs = {}
     infoobject.songcount = 0
     infoobject.totalcount = len(infoobject.songs)
@@ -254,7 +254,7 @@ def downloadlistofsongs(infoobject):
         infoobject.cursong = songname
         print('\t\tDownloading - ' + songname)
 
-        res = Search(infoobject.album + ' ' + infoobject.artist + ' song ' + songname).results
+        res = Search(infoobject.release + ' ' + infoobject.artist + ' song ' + songname).results
         loop = len(res)
         songlen = infoobject.songs[songname]
         if songlen == 0:
@@ -295,7 +295,7 @@ def downloadlistofsongs(infoobject):
                 if mismatchbool or (word.lower() not in videoname):
                     mismatchbool = True
                     break
-            for word in infoobject.album.split():
+            for word in infoobject.release.split():
                 if mismatchbool or (word.lower() not in videoname):
                     mismatchbool = True
                     break
@@ -317,7 +317,7 @@ def downloadlistofsongs(infoobject):
         infoobject.songcount += 1  # increment songcount once song is found, before downloading it
 
         if songname in infoobject.history:
-            print('\r\t\tSong Previously Downloaded', end="\r", flush=True)
+            print('\r\t\tSong Previously Downloaded')
         else:
             # Add song to successful songs if downloadsong returns true
             try:
@@ -352,7 +352,7 @@ def downloadsong(ytobj, infoobject):
     clip.write_audiofile(cleanname, logger=None)  # write audio to an mp3 file
     os.remove(video)  # delete old mp4
 
-    if infoobject.album:
+    if infoobject.release:
         tagsong(cleanname, infoobject)
 
     print('\r', end='', flush=True)
@@ -367,12 +367,12 @@ def tagsong(target, infoobject):
     tagtarget.title = infoobject.cursong
     tagtarget.artist = infoobject.artist
     tagtarget.album_artist = infoobject.artist
-    tagtarget.album = infoobject.album
+    tagtarget.release = infoobject.release
     tagtarget.track_num = (infoobject.songcount, infoobject.totalcount)
     if infoobject.art != 'fail':  # Check if coverart is actually valid
         coverart = infoobject.art.url
 
-        filename = os.path.join(infoobject.targetstorage, infoobject.album + ".jpeg")
+        filename = os.path.join(infoobject.targetstorage, infoobject.release + ".jpeg")
         r = requests.get(coverart, stream=True)
         r.raw.decode_content = True
 
@@ -447,23 +447,24 @@ def writehistory(infoobj):
         Infoobj is an Information object with information on new songs that have been downloaded.
         History.json exists prior to now
     Update values in history json with given values."""
-    histdir = infoobj.histstorage
     artist = infoobj.artist
-    newhist = infoobj.songs
+    release = infoobj.release
+    histdir = infoobj.histstorage
+    newhist = infoobj.success
 
     totalhist = readhistory(histdir, artist)
 
     # merge and format old and new lists of songs downloaded.
-    totalhist.update(newhist)
+    totalhist[release].update(newhist[release])
     result = json.dumps({infoobj.artist: totalhist}, sort_keys=True, indent=4)
 
     # write result to the file
     f = open(histdir, 'w')
     f.write(result)
-
+    f.close()
 
 # TODO implement readhistory
-def readhistory(histdir, artist=None):
+def readhistory(histdir, artist=None, ):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
     f = open(histdir, 'r')
