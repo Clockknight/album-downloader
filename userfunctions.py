@@ -83,12 +83,14 @@ def cacheinput():
     # after for loop, call releaseinput() or artistinput() based on inputs given before
 
 
-def urlinput():
+def urlinput(url=None):
     """Download given YouTube URL as MP3."""
     # TODO replace all instance of infoobject with reference to a Information class
-    infoobject = Information().urlinit()
+    infoobject = Information()
+    infoobject.urlinit()
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
-    url = input('\nPlease input the url of the video you want to download.\n\t')
+    if url is None:
+        url = input('\nPlease input the url of the video you want to download.\n\t')
 
     try:
         # Declare ytobj now to declare infoobject.art as the youtube thumbnail
@@ -445,26 +447,26 @@ def writehistory(infoobj):
         Infoobj is an Information object with information on new songs that have been downloaded.
         History.json exists prior to now
     Update values in history json with given values."""
-    dir = infoobj.histstorage
+    histdir = infoobj.histstorage
     artist = infoobj.artist
     newhist = infoobj.songs
 
-    totalhist = readhistory(dir, artist)
+    totalhist = readhistory(histdir, artist)
 
     # merge and format old and new lists of songs downloaded.
     totalhist.update(newhist)
     result = json.dumps({infoobj.artist: totalhist}, sort_keys=True, indent=4)
 
     # write result to the file
-    f = open(dir, 'w')
+    f = open(histdir, 'w')
     f.write(result)
 
 
 # TODO implement readhistory
-def readhistory(dir, artist=None):
+def readhistory(histdir, artist=None):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
-    f = open(dir, 'r')
+    f = open(histdir, 'r')
 
     try:
         result = json.load(f)
@@ -478,3 +480,12 @@ def readhistory(dir, artist=None):
     else:
         return result[artist]
 
+
+# Used for testing
+def clearhist():
+    input("")
+    f = open("history.json", 'w')
+    f.write("")
+    shutil.rmtree("./Ken Ashcorp")
+    shutil.rmtree("./URL Downloads")
+    return 0
