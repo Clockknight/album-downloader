@@ -98,15 +98,13 @@ For more projects, check out my [github.io](http://clockknight.github.io).
 ### Built With
 
 * [eyed3](https://pypi.org/project/eyed3/)
-* [urllib](https://urllib3.readthedocs.io/en/stable/)
+* [urllib3](https://urllib3.readthedocs.io/en/stable/)
 * [pytube](https://github.com/pytube/pytube)
 * [requests](https://docs.python-requests.org/en/latest/)
 * [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/)
 * [moviepy](https://zulko.github.io/moviepy/)
-* [json](https://docs.python.org/3/library/json.html)
-* [shutil](https://docs.python.org/3/library/shutil.html)
 * [regex](https://docs.python.org/3/library/re.html)
-
+* [pydub](https://pydub.com/)
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 

@@ -1,4 +1,3 @@
-import sys
 from json import JSONDecodeError
 
 import eyed3
