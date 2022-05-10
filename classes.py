@@ -1,7 +1,5 @@
 class Information:
-    def __init__(self, settings=None):
-        if settings is None:
-            settings = Settings()
+    def __init__(self):
         self.release = ''
         self.artist = None
         self.art = ''
@@ -12,7 +10,7 @@ class Information:
         self.history = {}
 
         # Vars for storing directories to files
-        self.histstorage = settings.gethistdir()
+        self.histstorage = 'history.json'
         self.targetstorage = ''
 
         self.songcount = 0
@@ -31,10 +29,4 @@ class Information:
         return release
 
 
-class Settings:
-    def __init__(self):
-        self.seperatereleases = False
-        self.histdir = 'history.json'
 
-    def gethistdir(self):
-        return self.histdir

@@ -161,7 +161,7 @@ def parseartist(query):
     """Parse artist, calling parseartistpage for each page. Return formatted list of songs downloaded."""
     # TODO include method to get releases the artist is only credited in
     index = 1
-    success = Information()
+    infoobj = Information()
 
     while True:
         # store array of releases to download
@@ -174,11 +174,11 @@ def parseartist(query):
         if not releases:
             break
         for release in releases:
-            success.success.update(processrelease(release).success)
+            infoobj.success.update(processrelease(release).success)
         # go to next page of artist
         index += 1
 
-    return success
+    return infoobj
 
 
 def parseartistpage(query):
@@ -194,15 +194,14 @@ def parseartistpage(query):
         if tr.has_attr("data-object-type"):
             tr = tr.find("a")
             results.append("https://discogs.com" + tr["href"])
-
     return results
 
 
 def processrelease(query, infoobject=None):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     # TODO Figure out how to deal with multiple releases with the same name EX madeon - adventure
-    infoobject = Information()
-    infoobject.histstorage = checkhistory()
+    if infoobject is None:
+        infoobject = Information()
 
     #  tryexcept for passed query
     try:
@@ -286,8 +285,7 @@ def downloadlistofsongs(infoobject):
 
             # Filter for video codeblock
             if vidlen not in range(int(songlen * .95), int(songlen * 1.25)) and songlen != 0:
-                mismatchbool = True
-                continue
+                break
 
             # TODO Improve this filter further by somehow compacting into a single regex, with the same restrictions
             for word in infoobject.cursong.split():
@@ -315,6 +313,7 @@ def downloadlistofsongs(infoobject):
         # cleanname is directory of mp4
         infoobject.songcount += 1  # increment songcount once song is found, before downloading it
 
+        print(infoobject.history)
         if songname in infoobject.history:
             print('\r\t\tSong Previously Downloaded')
         else:
@@ -329,9 +328,11 @@ def downloadlistofsongs(infoobject):
 
 
 # todo implement update
-def update(jsonarray):
+def update():
     """Check releases and artists for previously undownloaded songs. Call writehistory."""
-    return 0
+    infoobj = Information()
+
+
 
 
 # Functions that download albums or songs, after parsing info
@@ -426,12 +427,12 @@ def songlistin(releasesoup):
     return result
 
 
-def checkhistory():
+def checkhistory(historydir=None):
     """Assume:
         User wants history file at location. Location informed by Settings object.
     Write history.json if it doesn't exist yet. Return the directory to the file opened."""
     # TODO make this informed by settings object
-    historydir = "history.json"
+    if historydir is None: historydir = "history.json"
 
     if not os.path.exists(historydir):
         with open(historydir, 'w') as f:
@@ -457,7 +458,7 @@ def writehistory(infoobj):
     if release in totalhist:
         totalhist[release].update(newhist[release])
     else:
-        totalhist = newhist
+        totalhist.update(newhist)
     result = json.dumps({infoobj.artist: totalhist}, sort_keys=True, indent=4)
 
     # write result to the file
@@ -476,12 +477,13 @@ def readhistory(histdir, artist=None):
     # except for general json issue
     except JSONDecodeError:
         # TODO how to handle empty file?
-        result = {}
-
-    if result == {} or artist is None:
-        return result
+        return {}
+    if artist is None:
+        return {}
     elif artist in result:
         return result[artist]
+    else:
+        return {}
 
 
 # Used for testing
@@ -489,11 +491,17 @@ def clearhistory():
     f = open("history.json", 'w')
     f.write("")
 
-    # Hard coded folder remove values for testing purposes
-    dir = "./Ken Ashcorp"
-    os.makedirs(dir, exist_ok=True)
-    shutil.rmtree(dir)
+    test("./Ken Ashcorp")
+    test("/Various")
+    test("./URL Downloads")
+    test("./GGRIM")
+    test("./Cxxlion")
 
-    dir = "./URL Downloads"
+
+
+
+    # Hard coded folder remove values for testing purposes
+def test(dir):
+
     os.makedirs(dir, exist_ok=True)
     shutil.rmtree(dir)
