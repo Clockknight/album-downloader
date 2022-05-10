@@ -454,7 +454,10 @@ def writehistory(infoobj):
     totalhist = readhistory(histdir, artist)
 
     # merge and format old and new lists of songs downloaded.
-    totalhist[release].update(newhist[release])
+    if release in totalhist:
+        totalhist[release].update(newhist[release])
+    else:
+        totalhist = newhist
     result = json.dumps({infoobj.artist: totalhist}, sort_keys=True, indent=4)
 
     # write result to the file
@@ -463,7 +466,7 @@ def writehistory(infoobj):
     f.close()
 
 # TODO implement readhistory
-def readhistory(histdir, artist=None, ):
+def readhistory(histdir, artist=None):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
     f = open(histdir, 'r')
@@ -477,15 +480,20 @@ def readhistory(histdir, artist=None, ):
 
     if result == {} or artist is None:
         return result
-    else:
+    elif artist in result:
         return result[artist]
 
 
 # Used for testing
-def clearhist():
-    input("")
+def clearhistory():
     f = open("history.json", 'w')
     f.write("")
-    shutil.rmtree("./Ken Ashcorp")
-    shutil.rmtree("./URL Downloads")
-    return 0
+
+    # Hard coded folder remove values for testing purposes
+    dir = "./Ken Ashcorp"
+    os.makedirs(dir, exist_ok=True)
+    shutil.rmtree(dir)
+
+    dir = "./URL Downloads"
+    os.makedirs(dir, exist_ok=True)
+    shutil.rmtree(dir)

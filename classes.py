@@ -3,7 +3,7 @@ class Information:
         if settings is None:
             settings = Settings()
         self.release = ''
-        self.artist = ''
+        self.artist = None
         self.art = ''
         self.cursong = ''
 
