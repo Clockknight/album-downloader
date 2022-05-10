@@ -74,6 +74,7 @@ def cacheinput():
 
     # Use readlines to seperate out the links of albums
     cachearray = open(filedir, 'r').readlines()
+    # Create dict based on items, and responses given by user
     # Run downloadlistofsongs
     # for item in resultArray:
     # ask user if its artist or album
@@ -325,7 +326,6 @@ def downloadlistofsongs(infoobject):
     return successfulsongs
 
 
-# todo implement update
 def update():
     """Check releases and artists for previously undownloaded songs. Call writehistory."""
     infoobj = Information()
