@@ -118,7 +118,6 @@ def searchinput(mode, searchterm=None):
 
 def searchprocess(word, searchterm):
     """Parse relevant information and call to appropriate function."""
-    resultartiststhatarentmatching = []
     searchterm = searchterm.lower()
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word  # makes url to search for results
@@ -174,7 +173,7 @@ def parseartist(query):
         if not releases:
             break
         for release in releases:
-            infoobj.success.update(processrelease(release).success)
+            infoobj.update(processrelease(release))
         # go to next page of artist
         index += 1
 
@@ -313,7 +312,6 @@ def downloadlistofsongs(infoobject):
         # cleanname is directory of mp4
         infoobject.songcount += 1  # increment songcount once song is found, before downloading it
 
-        print(infoobject.history)
         if songname in infoobject.history:
             print('\r\t\tSong Previously Downloaded')
         else:
@@ -332,7 +330,9 @@ def update():
     """Check releases and artists for previously undownloaded songs. Call writehistory."""
     infoobj = Information()
 
-
+    history = readhistory(infoobj.histstorage)
+    for artist in history:
+        searchprocess("artist", artist)
 
 
 # Functions that download albums or songs, after parsing info
@@ -466,6 +466,7 @@ def writehistory(infoobj):
     f.write(result)
     f.close()
 
+
 # TODO implement readhistory
 def readhistory(histdir, artist=None):
     """Return artist's results from history.json as a dict.
@@ -476,10 +477,9 @@ def readhistory(histdir, artist=None):
         result = json.load(f)
     # except for general json issue
     except JSONDecodeError:
-        # TODO how to handle empty file?
-        return {}
+        return result == {}
     if artist is None:
-        return {}
+        return result
     elif artist in result:
         return result[artist]
     else:
@@ -497,11 +497,9 @@ def clearhistory():
     test("./GGRIM")
     test("./Cxxlion")
 
-
-
-
     # Hard coded folder remove values for testing purposes
-def test(dir):
 
+
+def test(dir):
     os.makedirs(dir, exist_ok=True)
     shutil.rmtree(dir)

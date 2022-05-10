@@ -28,5 +28,9 @@ class Information:
 
         return release
 
+    def update(self, infoobj):
+        self.success.update(infoobj.success)
+        self.artist = infoobj.artist
+
 
 
