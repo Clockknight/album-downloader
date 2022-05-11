@@ -64,28 +64,39 @@ Change the settings of the script.
 
 def cacheinput():
     """Take multiple inputs from text file, ask user if given input is artist or release."""
-    # TODO implement cacheinput
-    # needs to refer to clockknight want.txt, and then run
+    cachedict = {}
     # parses each line as new input, prompts user to clarify if each line is an artist or a user
-    # if it is a url, note it and move on instead of actually asking
-    # Find text file with links to google searches of albums' songs
     filedir = input(
         'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
 
     # Use readlines to seperate out the links of albums
-    cachearray = open(filedir, 'r').readlines()
+    items = open(filedir, 'r').readlines()
+    for item in items:
+        case = -1
+        while case not in range(2):
+            case = int(input(
+                "\nItem: "
+                + item +
+                """Input 0 if this is an artist
+Input 1 if it is a release. """))
+
+        cachedict[item] = case
     # Create dict based on items, and responses given by user
-    # Run downloadlistofsongs
+
     # for item in resultArray:
     # ask user if its artist or album
     # store information in related array
 
-    # after for loop, call releaseinput() or artistinput() based on inputs given before
+    # Wait until all cache strings are processed before downloading all at once
+    for key in cachedict:
+        searchinput(cachedict[key], key)
+
+
+
 
 
 def urlinput(url=None):
     """Download given YouTube URL as MP3."""
-    # TODO replace all instance of infoobject with reference to a Information class
     infoobject = Information()
     infoobject.init("url")
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder

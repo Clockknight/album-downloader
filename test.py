@@ -11,6 +11,8 @@ if __name__ == '__main__':
 
 from userfunctions import *
 
+cacheinput()
+
 searchinput(1, "20 Percent Cooler")
 update()
 
