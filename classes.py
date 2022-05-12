@@ -1,9 +1,10 @@
 class Information:
     def __init__(self):
         self.release = ''
-        self.artist = None
         self.art = ''
         self.cursong = ''
+        self.artist = None
+        self.album = True
 
         self.songs = {}
         self.success = {}
@@ -16,11 +17,9 @@ class Information:
         self.songcount = 0
         self.totalcount = 0
 
-    def init(self, mode):
-        match mode:
-            case "url":
-                self.album = False
-                self.targetstorage = "URL Downloads"
+    def init(self):
+        self.album = False
+        self.targetstorage = "URL Downloads"
 
     def summary(self):
 
@@ -31,6 +30,3 @@ class Information:
     def update(self, infoobj):
         self.success.update(infoobj.success)
         self.artist = infoobj.artist
-
-
-

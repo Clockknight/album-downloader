@@ -13,6 +13,7 @@ import json
 import re
 import os
 
+
 def optionselect():
     """Text menu for user to choose option"""
     option = input('''
@@ -91,13 +92,10 @@ Input 1 if it is a release. """))
         searchinput(cachedict[key], key)
 
 
-
-
-
 def urlinput(url=None):
     """Download given YouTube URL as MP3."""
     infoobject = Information()
-    infoobject.init("url")
+    infoobject.init()
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
     if url is None:
         url = input('\nPlease input the url of the video you want to download.\n\t')
@@ -149,11 +147,6 @@ def searchprocess(word, searchterm):
         if result[-1] == searchterm and word == 'artist':  # compare input to card's title
             result = result[-1]
             break
-
-
-
-
-
 
     if word == 'release':
         success = processrelease("https://discogs.com" + result.a["href"])
@@ -312,7 +305,8 @@ def downloadlistofsongs(infoobject):
                     mismatchbool = True
                     break
 
-            if not mismatchbool: break
+            if not mismatchbool:
+                break
 
         # check, catches if no videos in first results are
         if loop == 0:
@@ -329,8 +323,11 @@ def downloadlistofsongs(infoobject):
         else:
             # Add song to successful songs if downloadsong returns true
             try:
-                if downloadsong(video, infoobject): successfulsongs.update({songname: songlen})
-            except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:  # Skip to next song if above block raises an error
+                if downloadsong(video, infoobject):
+                    successfulsongs.update({songname: songlen})
+
+            # Skip to next song if above block raises an error
+            except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
                 print('Warning: issue downloading from YouTube - ' + songname)
                 continue
 
@@ -443,7 +440,8 @@ def checkhistory(historydir=None):
         User wants history file at location. Location informed by Settings object.
     Write history.json if it doesn't exist yet. Return the directory to the file opened."""
     # TODO make this informed by settings object
-    if historydir is None: historydir = "history.json"
+    if historydir is None:
+        historydir = "history.json"
 
     if not os.path.exists(historydir):
         with open(historydir, 'w') as f:
@@ -509,14 +507,15 @@ def clearhistory():
     # Hard coded folder remove values for testing purposes
 
 
-def test(dir):
-    os.makedirs(dir, exist_ok=True)
-    shutil.rmtree(dir)
+def test(testdir):
+    os.makedirs(testdir, exist_ok=True)
+    shutil.rmtree(testdir)
+
 
 def parsetime(instring):
     """Convert hh:mm:ss strings into int value in seconds."""
     # TODO raise error if string is not in format of digits and colons
-    timere = re.compile('\d+')
+    timere = re.compile("\d+")
     colre = re.findall(':', instring)
     iter = len(colre)
     result = 0
@@ -540,6 +539,3 @@ def parsetime(instring):
         iter -= 1
 
     return result
-
-
-
