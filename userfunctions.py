@@ -1,18 +1,17 @@
 from json import JSONDecodeError
-
 import eyed3
 import urllib
 import requests
 import shutil
 import pytube
-
 from pytube import YouTube, Search
 from bs4 import BeautifulSoup
 from moviepy.editor import *
 from classes import *
-from helperfunctions import *
 from pydub import AudioSegment, effects
-
+import json
+import re
+import os
 
 def optionselect():
     """Text menu for user to choose option"""
@@ -130,6 +129,7 @@ def searchinput(mode, searchterm=None):
 
 def searchprocess(word, searchterm):
     """Parse relevant information and call to appropriate function."""
+    result = []
     searchterm = searchterm.lower()
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word  # makes url to search for results
@@ -143,27 +143,27 @@ def searchprocess(word, searchterm):
 
     # Go through each div, each one has a release/artist with a link out
     for div in divlist:
-        # TODO Give up and print a bunch of results if no perfect match is found
+        result.append(div.find('h4').find('a')['title'].lower())
 
-        # TODO Check if multiple versions from different artists exist, get one with most songs
-        result = div.find('h4').find('a')['title'].lower()
-        if result == searchterm:  # compare input to card's title
-            # TODO run on more than first release matched (get every unique song title returned)
-            # Run different function mode chosen
-            match word:
-                case 'release':
-                    success = processrelease("https://discogs.com" + div.a["href"])
-                    # TODO Make Fail case here (would mean first page has 0 matches)
-
-                case 'artist':
-                    # Only artist mode has multipage support (Not an issue yet?)
-                    success = parseartist("https://discogs.com" + div.a["href"] + "?page=")
-                    # TODO Make this write to json just the artist, since no results were found
-
-            # After above search runs, write to the history json then break
-            # Both return a success object
-            writehistory(success)
+        # If looking for artist, it takes first perfect match and escapes
+        if result[-1] == searchterm and word == 'artist':  # compare input to card's title
+            result = result[-1]
             break
+
+
+
+
+
+
+    if word == 'release':
+        success = processrelease("https://discogs.com" + result.a["href"])
+    else:
+        # Only artist mode has multipage support (Not an issue yet?)
+        success = parseartist("https://discogs.com" + result.a["href"] + "?page=")
+
+    # After above search runs, write to the history json then break
+    # Both return a success object
+    writehistory(success)
 
     # Should print out unique results scraped, and give user chance to correct input
 
@@ -210,7 +210,7 @@ def parseartistpage(query):
 
 def processrelease(query, infoobject=None):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
-    # TODO Figure out how to deal with multiple releases with the same name EX madeon - adventure
+    # TODO Check if multiple versions from different artists exist, get one with most songs
     if infoobject is None:
         infoobject = Information()
 
@@ -452,7 +452,6 @@ def checkhistory(historydir=None):
     return historydir
 
 
-# TODO implement writehistory
 def writehistory(infoobj):
     """Assume:
         Infoobj is an Information object with information on new songs that have been downloaded.
@@ -478,7 +477,6 @@ def writehistory(infoobj):
     f.close()
 
 
-# TODO implement readhistory
 def readhistory(histdir, artist=None):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
@@ -514,3 +512,34 @@ def clearhistory():
 def test(dir):
     os.makedirs(dir, exist_ok=True)
     shutil.rmtree(dir)
+
+def parsetime(instring):
+    """Convert hh:mm:ss strings into int value in seconds."""
+    # TODO raise error if string is not in format of digits and colons
+    timere = re.compile('\d+')
+    colre = re.findall(':', instring)
+    iter = len(colre)
+    result = 0
+
+    for value in re.findall(timere, instring):
+        value = int(value)
+        match (iter):
+            # if 2nd iteration, then assume previous numbers are in seconds, convert to  minutes
+            case 1:
+                value *= 60
+
+            # if 3rd iteration, then assume previous numbers are in minutes, convert to hours
+            case 2:
+                value *= 60
+
+            # if 4th iteration, then assume previous numbers are in hours, convert to days
+            case 3:
+                value *= 24
+
+        result += value
+        iter -= 1
+
+    return result
+
+
+
