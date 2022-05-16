@@ -30,3 +30,6 @@ class Information:
     def update(self, infoobj):
         self.success.update(infoobj.success)
         self.artist = infoobj.artist
+
+    def historyvar(self):
+        return self.artist, self.release, self.histstorage, self.success

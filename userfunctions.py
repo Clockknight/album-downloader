@@ -70,15 +70,17 @@ def cacheinput():
         'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
 
     # Use readlines to seperate out the links of albums
-    items = open(filedir, 'r').readlines()
+    items = open(filedir, 'r').read().splitlines()
     for item in items:
         case = -1
         while case not in range(2):
             case = int(input(
                 "\nItem: "
                 + item +
-                """Input 0 if this is an artist
-Input 1 if it is a release. """))
+                """
+Input 0 if this is an artist
+Input 1 if it is a release.
+"""))
 
         cachedict[item] = case
     # Create dict based on items, and responses given by user
@@ -128,6 +130,7 @@ def searchinput(mode, searchterm=None):
 def searchprocess(word, searchterm):
     """Parse relevant information and call to appropriate function."""
     result = []
+    matches = []
     searchterm = searchterm.lower()
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word  # makes url to search for results
@@ -141,18 +144,31 @@ def searchprocess(word, searchterm):
 
     # Go through each div, each one has a release/artist with a link out
     for div in divlist:
-        result.append(div.find('h4').find('a')['title'].lower())
+        result.append(div.find('h4').find('a'))
+        title = result[-1]['title'].lower()
 
         # If looking for artist, it takes first perfect match and escapes
-        if result[-1] == searchterm and word == 'artist':  # compare input to card's title
-            result = result[-1]
-            break
+        if title == searchterm and word == 'artist':  # compare input to card's title
+            matches.append(result[-1])
+            result.pop(-1)
+
+    i = getuseroption(matches)
+
+    if i:
+        result = matches[i - 1]
+        # goes here if useroption returns 0
+    if isinstance(result, list):
+        i = getuseroption(result)
+        if i:
+            result = result[i - 1]
+
+        # print out the stuff and ask user for correct
 
     if word == 'release':
-        success = processrelease("https://discogs.com" + result.a["href"])
+        success = processrelease("https://discogs.com" + result["href"])
     else:
         # Only artist mode has multipage support (Not an issue yet?)
-        success = parseartist("https://discogs.com" + result.a["href"] + "?page=")
+        success = parseartist("https://discogs.com" + result["href"] + "?page=")
 
     # After above search runs, write to the history json then break
     # Both return a success object
@@ -455,10 +471,7 @@ def writehistory(infoobj):
         Infoobj is an Information object with information on new songs that have been downloaded.
         History.json exists prior to now
     Update values in history json with given values."""
-    artist = infoobj.artist
-    release = infoobj.release
-    histdir = infoobj.histstorage
-    newhist = infoobj.success
+    artist, release, histdir, newhist = infoobj.historyvar()
 
     totalhist = readhistory(histdir, artist)
 
@@ -498,19 +511,6 @@ def clearhistory():
     f = open("history.json", 'w')
     f.write("")
 
-    test("./Ken Ashcorp")
-    test("/Various")
-    test("./URL Downloads")
-    test("./GGRIM")
-    test("./Cxxlion")
-
-    # Hard coded folder remove values for testing purposes
-
-
-def test(testdir):
-    os.makedirs(testdir, exist_ok=True)
-    shutil.rmtree(testdir)
-
 
 def parsetime(instring):
     """Convert hh:mm:ss strings into int value in seconds."""
@@ -539,3 +539,18 @@ def parsetime(instring):
         iter -= 1
 
     return result
+
+
+def getuseroption(tagarray):
+    """Print out all of an array's item's, then ask user for an option."""
+    length = len(tagarray)
+    if not length or length == 1:
+        return length
+    option = -1
+    lenran = range(length)
+    display = ""
+    for i in lenran:
+        display += str(i + 1) + ": " + tagarray[i]['title'] + "\n"
+
+    while option not in lenran:
+        option = input(display)
