@@ -292,14 +292,6 @@ def downloadlistofsongs(infoobject):
             mismatchbool = False
             print('\r\t\tAttempting video ' + str(videos - loop + 1) + '/' + str(videos), end='\r', flush=True)
             loop -= 1
-            try:
-                videoname = video.title.split()
-
-            except Exception as e:
-                print(e)
-                continue  # tryexcept for livestreams
-            for i in range(len(videoname)):
-                videoname[i] = videoname[i].lower()
             # Range is 85% to 110% of the song length
             vidlen = video.length
 
@@ -308,7 +300,7 @@ def downloadlistofsongs(infoobject):
                 continue # Try again with next video if it's out of range
 
             # TODO Improve this filter further by somehow compacting into a single regex, with the same restrictions
-            if not searchresultfilter(infoobject, videoname):
+            if searchresultfilter(infoobject, video):
                 break
 
         # check, catches if no videos in first results are
@@ -544,10 +536,20 @@ def getuseroption(tagarray):
 
     return option
 
-def searchresultfilter(infoobject, videoname):
-    allwords = infoobject.filterwords()
+def searchresultfilter(infoobject, video):
+    filterwords = infoobject.filterwords()
+    failwords = []
 
-    for word in allwords:
+    try:
+        videoname = video.title.split()
+    except Exception as e:
+        print(e)
+        return False
+    for i in range(len(videoname)):
+        videoname[i] = videoname[i].lower()
+
+
+    for word in infoobject.cursong.split():
         temp = False
         for vidword in videoname:
             if not temp and word.lower() in vidword:
@@ -557,5 +559,26 @@ def searchresultfilter(infoobject, videoname):
         if not temp:
             return False
 
-    # return True if the program has processed everything
+
+    # Try to find word in title
+    # if it's not in title, track it, then check description
+    for word in filterwords:
+        for vidword in videoname:
+            if not temp and word.lower() in vidword:
+                failwords.append(word)
+                break
+
+    # Only enter this loop if filterwords isn't empty
+    if failwords:
+        descwords = video.description.split()
+        for word in failwords:
+            temp = False
+            for dword in descwords:
+                if word in dword:
+                    temp = True
+                    break
+            if not temp:
+                return False
+
+    # return true if code reaches here
     return True

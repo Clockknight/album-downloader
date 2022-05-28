@@ -35,4 +35,4 @@ class Information:
         return self.artist, self.release, self.histstorage, self.success
 
     def filterwords(self):
-        return self.cursong.split() + self.release.split() + self.artist.split()
+        return self.artist.split() + self.release.split()
