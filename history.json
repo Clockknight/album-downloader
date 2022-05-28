@@ -1,7 +1,37 @@
 {
-    "Ken Ashcorp": {
-        "20 Percent Cooler": {
-            "20 Percent Cooler": 192
+    "SIAM\u00c9S": {
+        "Bounce Into The Music": {
+            "As You Get High": 277,
+            "Firestorm": 209,
+            "Gimme Some Sweet": 266,
+            "Mr Fear": 245,
+            "No Honey": 244,
+            "Stronger": 201,
+            "The Cave": 226,
+            "The Wolf": 225,
+            "Used To Be": 228
+        },
+        "Bounce Into The Music (Collectors Edition)": {
+            "As You Get High": 277,
+            "B.I.T.M + The Wolf ": 225,
+            "Firestorm ": 209,
+            "Gimme Some Sweet ": 266,
+            "Mr. Fear": 245,
+            "No Honey ": 244,
+            "Stronger ": 201,
+            "The Cave ": 226,
+            "Used To Be ": 228
+        },
+        "HOME (Collectors Edition)": {
+            "2 Feathers": 184,
+            "Brothers": 245,
+            "Easier": 197,
+            "Home": 39,
+            "I Can't Wait": 173,
+            "No Lullaby": 201,
+            "Summer Nights": 215,
+            "The Protected": 212,
+            "Young and Restless": 229
         }
     }
 }

@@ -300,28 +300,15 @@ def downloadlistofsongs(infoobject):
                 continue  # tryexcept for livestreams
             for i in range(len(videoname)):
                 videoname[i] = videoname[i].lower()
-            # Range is 95% to 110% of the song length
+            # Range is 85% to 110% of the song length
             vidlen = video.length
 
             # Filter for video codeblock
-            if vidlen not in range(int(songlen * .95), int(songlen * 1.25)) and songlen != 0:
-                break
+            if vidlen not in range(int(songlen * .85), int(songlen * 1.25)) and songlen != 0:
+                continue # Try again with next video if it's out of range
 
             # TODO Improve this filter further by somehow compacting into a single regex, with the same restrictions
-            for word in infoobject.cursong.split():
-                if mismatchbool or (word.lower() not in videoname):
-                    mismatchbool = True
-                    break
-            for word in infoobject.release.split():
-                if mismatchbool or (word.lower() not in videoname):
-                    mismatchbool = True
-                    break
-            for word in infoobject.artist.split():
-                if mismatchbool or (word.lower() not in videoname):
-                    mismatchbool = True
-                    break
-
-            if not mismatchbool:
+            if not searchresultfilter(infoobject, videoname):
                 break
 
         # check, catches if no videos in first results are
@@ -547,10 +534,28 @@ def getuseroption(tagarray):
     if not length or length == 1:
         return length
     option = -1
-    lenran = range(length)
+    lenran = range(1, length)
     display = ""
     for i in lenran:
-        display += str(i + 1) + ": " + tagarray[i]['title'] + "\n"
+        display += str(i) + ": " + tagarray[i-1]['title'] + "\n"
 
     while option not in lenran:
-        option = input(display)
+        option = int(input(display))
+
+    return option
+
+def searchresultfilter(infoobject, videoname):
+    allwords = infoobject.filterwords()
+
+    for word in allwords:
+        temp = False
+        for vidword in videoname:
+            if not temp and word.lower() in vidword:
+                temp = True
+                break
+        # immediately return false if it cant be found in any of videoname's words
+        if not temp:
+            return False
+
+    # return True if the program has processed everything
+    return True
