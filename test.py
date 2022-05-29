@@ -26,38 +26,12 @@ def test(testdir):
     os.makedirs(testdir, exist_ok=True)
     shutil.rmtree(testdir)
 
-'''   
-Mystery Skulls
-I dont know how but they found me
-half alive 
-guilty gear xrd
-redline OST
-fatboy slim 
-OK GO
-Caravan Palace
-Trocadero
-The silent comedy
-Jamiroquai
-The Correspondents
-Foster the People
-Tame impala
-Panic at the Disco
-c2c
-Jim croce
-Franz Ferdinand
-Lemon Demon
-Devil May Cry OST
-Psy
-circa waves
-st vincent
-miike snow
-'''
 
-cacheinput()
 
 searchinput(1, "20 Percent Cooler")
 update()
 
+cacheinput()
 
 searchinput(0, "Lil Boodang")
 print(readhistory(checkhistory()))

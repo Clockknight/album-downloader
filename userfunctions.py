@@ -13,13 +13,14 @@ import json
 import re
 import os
 
+# TODO figure out why xrd doesnt download correctly
 
 def optionselect():
     """Text menu for user to choose option"""
     option = input('''
 Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
 
-1) Cache Mode {Not Implemented}
+1) Cache Mode
 Provide a .txt file with links to album's google result pages, seperated by lines.
 
 2) Search Mode (Artist)
@@ -28,7 +29,7 @@ Search for an artist's discography. The artist's discography will be stored in h
 3) Search Mode (Album)
 Search for an album. Recommended for albums with generic artist like "Various".
 
-4) Update {Not Implemented}
+4) Update
 Will check for new releases from artists that you have used this script to look at before. 
 
 8) URL Mode
@@ -53,7 +54,7 @@ Change the settings of the script.
         case '8':
             urlinput()
         case '9':
-            print("Not implemented yet, sorry")
+            update()
         case '0':
             sys.exit()
         case _:
@@ -188,6 +189,7 @@ def parseartist(query):
         try:
             releases = parseartistpage(query + str(index))
         except AttributeError as e:
+            print(e)
             break
 
         # if nothing is returned from above, break out (query for parseartistpage was an empty page)
@@ -297,7 +299,7 @@ def downloadlistofsongs(infoobject):
 
             # Filter for video codeblock
             if vidlen not in range(int(songlen * .85), int(songlen * 1.25)) and songlen != 0:
-                continue # Try again with next video if it's out of range
+                continue  # Try again with next video if it's out of range
 
             # TODO Improve this filter further by somehow compacting into a single regex, with the same restrictions
             if searchresultfilter(infoobject, video):
@@ -364,7 +366,7 @@ def downloadsong(ytobj, infoobject):
 
 
 def tagsong(target, infoobject):
-    """Tag MP3 with given information."""
+    """Tag MP3 with given information. Also normalizes the audio of the file."""
     tagtarget = eyed3.load(target)  # creates mp3audiofile at downloaded mp3
     tagtarget = tagtarget.tag
     tagtarget.title = infoobject.cursong
@@ -391,7 +393,7 @@ def tagsong(target, infoobject):
     tagtarget.save(target)
 
 
-# Helper functions,
+# Helper functions
 
 def writable(rewrite):
     """Return given string, after removing all characters that would cause errors."""
@@ -522,6 +524,7 @@ def parsetime(instring):
 
 def getuseroption(tagarray):
     """Print out all of an array's item's, then ask user for an option."""
+    #TODO Make this only print out 20 at a time and let user go back and forth
     length = len(tagarray)
     if not length or length == 1:
         return length
@@ -529,12 +532,13 @@ def getuseroption(tagarray):
     lenran = range(1, length)
     display = ""
     for i in lenran:
-        display += str(i) + ": " + tagarray[i-1]['title'] + "\n"
+        display += str(i) + ": " + tagarray[i - 1]['title'] + "\n"
 
     while option not in lenran:
         option = int(input(display))
 
     return option
+
 
 def searchresultfilter(infoobject, video):
     filterwords = infoobject.filterwords()
@@ -548,17 +552,15 @@ def searchresultfilter(infoobject, video):
     for i in range(len(videoname)):
         videoname[i] = videoname[i].lower()
 
-
     for word in infoobject.cursong.split():
         temp = False
         for vidword in videoname:
             if not temp and word.lower() in vidword:
                 temp = True
                 break
-        # immediately return false if it cant be found in any of videoname's words
+        # immediately return false if it can't be found in any of videoname's words
         if not temp:
             return False
-
 
     # Try to find word in title
     # if it's not in title, track it, then check description
