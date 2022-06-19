@@ -344,7 +344,10 @@ def update():
 def downloadsong(ytobj, infoobject):
     """Download MP3 from YouTube object. Return Bool based on if download was successful.
     Download as MP4 for now. Downloading the MP3 stream given causes issues when trying to edit MP3 tags."""
-    video = ytobj.streams.filter(type="video")
+    try:
+        video = ytobj.streams.filter(type="video")
+    except KeyError:
+        return False
     video = video.order_by("abr").desc().first()
     title = writable(video.title)
     cleanname = os.path.abspath(os.path.join(infoobject.targetstorage, writable(title))) + '.mp4'
