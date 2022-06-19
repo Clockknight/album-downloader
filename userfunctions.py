@@ -13,7 +13,8 @@ import json
 import re
 import os
 
-# TODO figure out why xrd doesnt download correctly
+
+# TODO figure out why guilty gear xrd -rev2- OST doesnt download correctly
 
 def optionselect():
     """Text menu for user to choose option"""
@@ -219,11 +220,9 @@ def parseartistpage(query):
     return results
 
 
-def processrelease(query, infoobject=None):
+def processrelease(query, infoobject=Information()):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     # TODO Check if multiple versions from different artists exist, get one with most songs
-    if infoobject is None:
-        infoobject = Information()
 
     #  tryexcept for passed query
     try:
@@ -249,14 +248,12 @@ def processrelease(query, infoobject=None):
 
     # Preparing directory to download song
     # create folder for artist, and subfolder for release
-    infoobject.targetstorage = os.path.join(writable(infoobject.artist), writable(infoobject.release))
+    infoobject.targetstorage = os.path.join("Downloads", writable(infoobject.artist), writable(infoobject.release))
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
 
     infoobject.songs = songlistin(soup)
-    infoobject.history = readhistory(infoobject.histstorage, infoobject.artist)
+    infoobject.history = readhistory(infoobject, infoobject.artist)
     infoobject.success = {infoobject.release: downloadlistofsongs(infoobject)}
-
-    # TODO Save album or add it to artist in history.json
 
     return infoobject
 
@@ -274,7 +271,7 @@ def downloadlistofsongs(infoobject):
         infoobject.cursong = songname
         print('\t\tDownloading - ' + songname)
 
-        res = Search(infoobject.release + ' ' + infoobject.artist + ' song ' + songname).results
+        res = Search(writable(infoobject.release + ' ' + infoobject.artist + ' song ' + songname)).results
         loop = len(res)
         songlen = infoobject.songs[songname]
         if songlen == 0:
@@ -287,6 +284,10 @@ def downloadlistofsongs(infoobject):
             res.get_next_results()
             loop = len(res.results)            
         '''
+
+        if songname in infoobject.history:
+            print('\r\t\tSong Previously Downloaded, Skipping...', flush=True)
+            continue
 
         videos = loop
 
@@ -315,18 +316,16 @@ def downloadlistofsongs(infoobject):
         # cleanname is directory of mp4
         infoobject.songcount += 1  # increment songcount once song is found, before downloading it
 
-        if songname in infoobject.history:
-            print('\r\t\tSong Previously Downloaded')
-        else:
-            # Add song to successful songs if downloadsong returns true
-            try:
-                if downloadsong(video, infoobject):
-                    successfulsongs.update({songname: songlen})
 
-            # Skip to next song if above block raises an error
-            except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
-                print('Warning: issue downloading from YouTube - ' + songname)
-                continue
+        # Add song to successful songs if downloadsong returns true
+        try:
+            if downloadsong(video, infoobject):
+                successfulsongs.update({songname: songlen})
+
+        # Skip to next song if above block raises an error
+        except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
+            print('Warning: issue downloading from YouTube - ' + songname)
+            continue
 
     return successfulsongs
 
@@ -335,7 +334,7 @@ def update():
     """Check releases and artists for previously undownloaded songs. Call writehistory."""
     infoobj = Information()
 
-    history = readhistory(infoobj.histstorage)
+    history = readhistory(infoobj)
     for artist in history:
         searchprocess("artist", artist)
 
@@ -345,12 +344,11 @@ def update():
 def downloadsong(ytobj, infoobject):
     """Download MP3 from YouTube object. Return Bool based on if download was successful.
     Download as MP4 for now. Downloading the MP3 stream given causes issues when trying to edit MP3 tags."""
-    video = ytobj.streams.filter(type="video").order_by("abr").desc().first()
-    title = video.title
-    title = writable(title)
-    cleanname = os.path.abspath(os.path.join(infoobject.targetstorage, title)) + '.mp4'
+    video = ytobj.streams.filter(type="video")
+    video = video.order_by("abr").desc().first()
+    title = writable(video.title)
+    cleanname = os.path.abspath(os.path.join(infoobject.targetstorage, writable(title))) + '.mp4'
     video.download(filename=cleanname)
-
     clip = AudioFileClip(cleanname)  # make var to point to mp4's audio
     video = cleanname  # reassign video to path to mp4
     cleanname = cleanname[:-1] + '3'  # change where cleanname points
@@ -377,7 +375,7 @@ def tagsong(target, infoobject):
     if infoobject.art != 'fail':  # Check if coverart is actually valid
         coverart = infoobject.art.url
 
-        filename = os.path.join(infoobject.targetstorage, infoobject.release + ".jpeg")
+        filename = os.path.join(infoobject.targetstorage, writable(infoobject.release) + ".jpeg")
         r = requests.get(coverart, stream=True)
         r.raw.decode_content = True
 
@@ -397,7 +395,7 @@ def tagsong(target, infoobject):
 
 def writable(rewrite):
     """Return given string, after removing all characters that would cause errors."""
-    pattern = r'[:<>\*\?\\\/|\"]'
+    pattern = r'[:<>\*\?\\\/|\/"]'
     rewrite = re.sub(pattern, "", rewrite)
     return rewrite.strip()
 
@@ -454,7 +452,7 @@ def writehistory(infoobj):
     Update values in history json with given values."""
     artist, release, histdir, newhist = infoobj.historyvar()
 
-    totalhist = readhistory(histdir, artist)
+    totalhist = readhistory(infoobj, artist)
 
     # merge and format old and new lists of songs downloaded.
     if release in totalhist:
@@ -469,16 +467,19 @@ def writehistory(infoobj):
     f.close()
 
 
-def readhistory(histdir, artist=None):
+def readhistory(infoobj, artist=None):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
+    histdir = infoobj.histstorage
+    if not os.path.exists(histdir):
+        open(histdir, 'w+')
     f = open(histdir, 'r')
 
     try:
         result = json.load(f)
     # except for general json issue
     except JSONDecodeError:
-        return result == {}
+        return {}
     if artist is None:
         return result
     elif artist in result:
@@ -489,7 +490,7 @@ def readhistory(histdir, artist=None):
 
 # Used for testing
 def clearhistory():
-    f = open("history.json", 'w')
+    f = open("assets/history.json", 'w')
     f.write("")
 
 
@@ -524,7 +525,7 @@ def parsetime(instring):
 
 def getuseroption(tagarray):
     """Print out all of an array's item's, then ask user for an option."""
-    #TODO Make this only print out 20 at a time and let user go back and forth
+    # TODO Make this only print out 20 at a time and let user go back and forth
     length = len(tagarray)
     if not length or length == 1:
         return length

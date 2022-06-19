@@ -11,7 +11,7 @@ class Information:
         self.history = {}
 
         # Vars for storing directories to files
-        self.histstorage = 'history.json'
+        self.histstorage = './assets/history.json'
         self.targetstorage = ''
 
         self.songcount = 0
@@ -28,11 +28,14 @@ class Information:
         return release
 
     def update(self, infoobj):
+        """Update values of the success dict variable with new """
         self.success.update(infoobj.success)
         self.artist = infoobj.artist
 
     def historyvar(self):
+        """Return various variables used when writing to history.json"""
         return self.artist, self.release, self.histstorage, self.success
 
     def filterwords(self):
+        """Return words that are used when filtering out video results"""
         return self.artist.split() + self.release.split()
