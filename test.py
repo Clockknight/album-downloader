@@ -27,9 +27,8 @@ def test(testdir):
     shutil.rmtree(testdir)
 
 
-
-searchinput(1, "20 Percent Cooler")
-update()
+# searchinput(1, "20 Percent Cooler")
+# update()
 
 cacheinput()
 
