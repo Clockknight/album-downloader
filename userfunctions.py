@@ -63,7 +63,7 @@ Change the settings of the script.
 
 
 # Functions that take input from user, pass release pages onto parse functions
-
+# TODO History is saved over, not updated
 def cacheinput():
     """Take multiple inputs from text file, ask user if given input is artist or release."""
     cachedict = {}

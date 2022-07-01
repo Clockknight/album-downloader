@@ -1,5 +1,5 @@
 from userfunctions import *
 
-while True:
-    optionselect()
+while optionselect():
+    continue
 
