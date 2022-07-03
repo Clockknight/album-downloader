@@ -26,21 +26,23 @@ def test(testdir):
     os.makedirs(testdir, exist_ok=True)
     shutil.rmtree(testdir)
 
+def result():
+    io = Information()
+    io.historystorage = checkhistory()
+    print(readhistory(io))
 
-# searchinput(1, "20 Percent Cooler")
-# update()
 
-cacheinput()
+testclear()
 
-searchinput(0, "Lil Boodang")
-print(readhistory(checkhistory()))
+searchinput(0, "crowder")
+result()
 
-searchinput(0, "Ken Ashcorp")
-print(readhistory(checkhistory()))
+searchinput(0, "Siames")
+result()
 
+'''
 urlinput("https://www.youtube.com/watch?v=BKUa0ISxhvQ")
 searchinput(1, "20 Percent Cooler")
-print(readhistory(checkhistory()))
+print(readhistory(checkhistory()))'''
 
-input("")
 testclear()

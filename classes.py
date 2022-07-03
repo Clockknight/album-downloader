@@ -34,7 +34,7 @@ class Information:
 
     def historyvar(self):
         """Return various variables used when writing to history.json"""
-        return self.artist, self.release, self.histstorage, self.success
+        return self.artist, self.release, self.histstorage, {self.artist: self.success}
 
     def filterwords(self):
         """Return words that are used when filtering out video results"""

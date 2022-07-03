@@ -63,7 +63,6 @@ Change the settings of the script.
 
 
 # Functions that take input from user, pass release pages onto parse functions
-# TODO History is saved over, not updated
 def cacheinput():
     """Take multiple inputs from text file, ask user if given input is artist or release."""
     cachedict = {}
@@ -455,14 +454,11 @@ def writehistory(infoobj):
     Update values in history json with given values."""
     artist, release, histdir, newhist = infoobj.historyvar()
 
-    totalhist = readhistory(infoobj, artist)
+    totalhist = readhistory(infoobj)
 
     # merge and format old and new lists of songs downloaded.
-    if release in totalhist:
-        totalhist[release].update(newhist[release])
-    else:
-        totalhist.update(newhist)
-    result = json.dumps({infoobj.artist: totalhist}, sort_keys=True, indent=4)
+    totalhist.update(newhist)
+    result = json.dumps( totalhist, sort_keys=True, indent=4)
 
     # write result to the file
     f = open(histdir, 'w')
