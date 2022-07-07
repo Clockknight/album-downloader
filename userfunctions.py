@@ -14,7 +14,12 @@ import re
 import os
 
 
-# TODO figure out why guilty gear xrd -rev2- OST doesnt download correctly
+# TODO make multiple passes through each video when looking through a song
+"""
+First pass, look for each word in the release name, song name in the title, artist name in title and channel name
+Second pass, also look through the videos' descriptions when looking for words in title, release name, artist name
+"""
+# TODO make history update after every release instead of each artist
 
 def optionselect():
     """Text menu for user to choose option"""
@@ -32,6 +37,9 @@ Search for an album. Recommended for albums with generic artist like "Various".
 
 4) Update
 Will check for new releases from artists that you have used this script to look at before. 
+
+5) Redownload
+Will download each song in every release, even if it has been previously downloaded. 
 
 8) URL Mode
 Paste in a YouTube URL, and the program will download it.
@@ -52,6 +60,8 @@ Change the settings of the script.
             searchinput(1)
         case '4':
             update()
+        case '5':
+            redownload()
         case '8':
             urlinput()
         case '9':
@@ -60,6 +70,8 @@ Change the settings of the script.
             sys.exit()
         case _:
             print('Invalid option selected. Please try again.\n\n')
+
+    return True
 
 
 # Functions that take input from user, pass release pages onto parse functions
@@ -242,7 +254,7 @@ def processrelease(query, infoobject=Information()):
         infoobject.art = requests.get("https://discogs.com" + coverart.find('a')['href'])
     except:
         # Let the user know the album art isn't available
-        print('\t\tWarning: Problem getting album art - ' + infoobject.release)
+        print('\t\tMissed Tag: Problem getting album art - ' + infoobject.release)
         infoobject.art = 'fail'  # set it to fail for mp3 tag check
 
     # Preparing directory to download song
@@ -251,7 +263,7 @@ def processrelease(query, infoobject=Information()):
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
 
     infoobject.songs = songlistin(soup)
-    infoobject.history = readhistory(infoobject, infoobject.artist)
+    infoobject.history = readhistory(infoobject)
     infoobject.success = {infoobject.release: downloadlistofsongs(infoobject)}
 
     return infoobject
@@ -307,7 +319,7 @@ def downloadlistofsongs(infoobject):
 
         # check, catches if no videos in first results are
         if loop == 0:
-            print('Warning: No result found within parameters - ' + songname)  # let user know about this
+            print('\t\tFailed Download: No result found within parameters - ' + songname)  # let user know about this
             continue  # move onto next songname in this case
 
         print('\r\t\tDownloading...', end="\r", flush=True)
@@ -323,7 +335,7 @@ def downloadlistofsongs(infoobject):
 
         # Skip to next song if above block raises an error
         except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
-            print('Warning: issue downloading from YouTube - ' + songname)
+            print('\t\tFailed Download: issue downloading from YouTube - ' + songname)
             continue
 
     return successfulsongs
@@ -337,6 +349,16 @@ def update():
     for artist in history:
         searchprocess("artist", artist)
 
+def redownload():
+    # check historyjson
+    history = readhistory(Information())
+
+    # write each artist's history as {}
+    for artist in history:
+        history[artist] = {}
+    writehistory(Information(), history)
+    # then update
+    update()
 
 # Functions that download albums or songs, after parsing info
 
@@ -371,8 +393,9 @@ def tagsong(target, infoobject):
     tagtarget = tagtarget.tag
     tagtarget.title = infoobject.cursong
     tagtarget.artist = infoobject.artist
+    # TODO Even though the wording is weird, "release" in this context refers to the name of the album, since info.album is a bool checking if there is an album
+    tagtarget.album = infoobject.release
     tagtarget.album_artist = infoobject.artist
-    tagtarget.release = infoobject.release
     tagtarget.track_num = (infoobject.songcount, infoobject.totalcount)
     if infoobject.art != 'fail':  # Check if coverart is actually valid
         coverart = infoobject.art.url
@@ -447,18 +470,23 @@ def checkhistory(historydir=None):
     return historydir
 
 
-def writehistory(infoobj):
+def writehistory(infoobj, overwriteHist=None):
     """Assume:
         Infoobj is an Information object with information on new songs that have been downloaded.
         History.json exists prior to now
     Update values in history json with given values."""
-    artist, release, histdir, newhist = infoobj.historyvar()
 
-    totalhist = readhistory(infoobj)
+    # Case where no overwrite history is provided
+    histdir, newhist = infoobj.historyvar()
 
-    # merge and format old and new lists of songs downloaded.
-    totalhist.update(newhist)
-    result = json.dumps( totalhist, sort_keys=True, indent=4)
+    if overwriteHist == None:
+        totalhist = readhistory(infoobj)
+        totalhist.update(newhist)
+
+    # Case where overwrite history is provided
+    else:
+        totalhist = overwriteHist
+    result = json.dumps(totalhist, sort_keys=True, indent=4)
 
     # write result to the file
     f = open(histdir, 'w')
@@ -466,10 +494,11 @@ def writehistory(infoobj):
     f.close()
 
 
-def readhistory(infoobj, artist=None):
+def readhistory(infoobj=Information()):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
     histdir = infoobj.histstorage
+    artist = infoobj.artist
     if not os.path.exists(histdir):
         open(histdir, 'w+')
     f = open(histdir, 'r')
@@ -485,12 +514,6 @@ def readhistory(infoobj, artist=None):
         return result[artist]
     else:
         return {}
-
-
-# Used for testing
-def clearhistory():
-    f = open("assets/history.json", 'w')
-    f.write("")
 
 
 def parsetime(instring):
@@ -584,3 +607,10 @@ def searchresultfilter(infoobject, video):
 
     # return true if code reaches here
     return True
+
+
+
+# Used for testing
+def clearhistory():
+    f = open("assets/history.json", 'w')
+    f.write("")

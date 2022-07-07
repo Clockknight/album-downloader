@@ -31,6 +31,7 @@ def result():
     io.historystorage = checkhistory()
     print(readhistory(io))
 
+thing = input("You're running test.py. This is going to clear your history.json, press enter to continue.")
 
 testclear()
 
