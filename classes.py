@@ -4,10 +4,11 @@ class Information:
         self.art = ''
         self.cursong = ''
         self.artist = None
+        self.cleanartist = self.artist  # variable to remove () from end of artists when they have a commonly used name
         self.isalbum = True
 
         self.songs = {}
-        self.success = {self.album:{}}
+        self.success = {self.album: {}}
         self.history = {}
 
         # Vars for storing directories to files
@@ -28,8 +29,18 @@ class Information:
 
     def historyvar(self):
         """Return various variables used when writing to history.json"""
-        return self.histstorage, {self.artist: self.success}
+        return self.histstorage, {self.artist: {self.album: self.success}}
 
     def filterwords(self):
         """Return words that are used when filtering out video results"""
         return self.artist.split() + self.album.split()
+
+    def setartist(self, inartist):
+        self.artist = inartist
+        self.history = {inartist: {}}
+
+    def updatesuccess(self, newdict):
+        if self.success == {"": {}}:
+            self.success = newdict
+        else:
+            self.success.update(newdict)

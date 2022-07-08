@@ -138,9 +138,9 @@ def searchinput(mode, searchterm=None):
 
 def update():
     """Check releases and artists for previously undownloaded songs. Call writehistory."""
-    infoobj = Information()
+    infoobject = Information()
 
-    history = readhistory(infoobj)
+    history = readhistory(infoobject)
     for artist in history:
         searchprocess("artist", artist)
 
@@ -243,10 +243,10 @@ def parseartistpage(query):
     return results
 
 
-def processrelease(query, infoobject=Information()):
+def processrelease(query):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     # TODO Check if multiple versions from different artists exist, get one with most songs
-
+    infoobject = Information()
     #  tryexcept for passed query
     try:
         page = requests.get(query)  # Use requests on the new URL
@@ -257,7 +257,7 @@ def processrelease(query, infoobject=Information()):
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artistname = name.find('a').text
-    infoobject.artist = artistname  # separate artist
+    infoobject.setartist(artistname)  # separate artist
     infoobject.album = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
     print('\n\tDownloading Album - ' + infoobject.album)
@@ -277,7 +277,7 @@ def processrelease(query, infoobject=Information()):
     infoobject.songs = songlistin(soup)
     infoobject.history = readhistory(infoobject)
     # TODO make code update with empty dict of artist and current release, in case either haven't been looked at before
-    # this is so with the clearer infoobj, the code will actually skip over previously downloaded songs
+    # this is so with the clearer infoobject, the code will actually skip over previously downloaded songs
     writehistory(infoobject)
     infoobject = downloadlistofsongs(infoobject)
     # Call to write history to UPDATE with the songs that have been downloaded.
@@ -289,7 +289,6 @@ def processrelease(query, infoobject=Information()):
 def downloadlistofsongs(infoobject):
     """Send pytube YouTube objects to download song.
     Return formatted dict of success songs, specifically for this release."""
-    successfulsongs = {}
     infoobject.songcount = 0
     infoobject.totalcount = len(infoobject.songs)
     # mega Codeblock to download array's songs
@@ -314,9 +313,14 @@ def downloadlistofsongs(infoobject):
             loop = len(res.results)
         '''
 
-        if songname in infoobject.history[infoobject.artist][infoobject.album]:
-            print('\r\t\tSong Previously Downloaded, Skipping...', flush=True)
-            continue
+        # Nested if checks to see if artist, album, and song are all used
+        if infoobject.artist in infoobject.history:
+            temp = infoobject.history[infoobject.artist]
+            if infoobject.album in temp:
+                temp = temp[infoobject.album]
+                if songname in temp:
+                    print('\r\t\tSong Previously Downloaded, Skipping...', flush=True)
+                    continue
 
         videos = loop
 
@@ -348,14 +352,15 @@ def downloadlistofsongs(infoobject):
         # Add song to successful songs if downloadsong returns true
         try:
             if downloadsong(video, infoobject):
-                successfulsongs.update({songname: songlen})
+                infoobject.updatesuccess({songname: songlen})
 
         # Skip to next song if above block raises an error
-        except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
+        except pytube.exceptions.VideoUnavailable:
+            print("blahblah")
             print('\t\tFailed Download: issue downloading from YouTube - ' + songname)
             continue
 
-    return successfulsongs
+    return infoobject
 
 
 def downloadsong(ytobj, infoobject):
@@ -377,10 +382,8 @@ def downloadsong(ytobj, infoobject):
 
     os.remove(videopath)  # delete old mp4
 
-
     if infoobject.isalbum:
         tagsong(audiopath, infoobject)
-
 
     print('\r', end='')
 
@@ -453,32 +456,40 @@ def songlistin(releasesoup):
     return result
 
 
-def checkhistory(infoobj=Information()):
+def checkhistory(infoobject=Information()):
     """Assume:
         User wants history file at location. Location informed by Information object.
     Write history.json if it doesn't exist yet. Return the directory to the file opened."""
-    historydir = infoobj.histstorage
+    historydir = infoobject.histstorage
     if historydir is None:
-        infoobj.histstorage, historydir = ".\\assets\\history.json"  # default history location
+        infoobject.histstorage, historydir = ".\\assets\\history.json"  # default history location
 
     if not os.path.exists(historydir):
         with open(historydir, 'w') as f:
             json.dump({}, f)
 
-    return infoobj
+    return infoobject
 
 
-def writehistory(infoobj, overwriteHist=None):
+def writehistory(infoobject, overwriteHist=None):
     """Assume:
-        Infoobj is an Information object with information on new songs that have been downloaded.
+        infoobject is an Information object with information on new songs that have been downloaded.
         History.json exists prior to now
     Update values in history json with given values."""
 
     # Case where no overwrite history is provided
-    histdir, newhist = infoobj.historyvar()
-
-    totalhist = readhistory(infoobj)
-    totalhist.update(newhist)
+    histdir, newhist = infoobject.historyvar()
+    totalhist = readhistory(infoobject)
+    curartist = infoobject.artist
+    # Check if the artist dict in history needs to be overwritten
+    if curartist in totalhist:
+        if len(totalhist[curartist]) == 1:
+            if infoobject.album in totalhist[curartist]:
+            # if the last two tests passed that means this is the first release to be processed, and this is the second writehistory call on that release
+                totalhist[curartist][infoobject.album] = {}
+        totalhist[curartist].update(newhist[curartist])
+    else:
+        totalhist.update(newhist)
 
     if overwriteHist is not None:
         totalhist = overwriteHist
@@ -491,10 +502,10 @@ def writehistory(infoobj, overwriteHist=None):
     f.close()
 
 
-def readhistory(infoobj=Information()):
+def readhistory(infoobject=Information()):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
-    histdir = infoobj.histstorage
+    histdir = infoobject.histstorage
     if not os.path.exists(histdir):
         open(histdir, 'w+')
     f = open(histdir, 'r')
@@ -505,6 +516,7 @@ def readhistory(infoobj=Information()):
     except JSONDecodeError:
         return {}
     return result
+
 
 def parsetime(instring):
     """Convert hh:mm:ss strings into int value in seconds."""
