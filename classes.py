@@ -1,13 +1,13 @@
 class Information:
     def __init__(self):
-        self.release = ''
+        self.album = ''
         self.art = ''
         self.cursong = ''
         self.artist = None
-        self.album = True
+        self.isalbum = True
 
         self.songs = {}
-        self.success = {}
+        self.success = {self.album:{}}
         self.history = {}
 
         # Vars for storing directories to files
@@ -17,15 +17,9 @@ class Information:
         self.songcount = 0
         self.totalcount = 0
 
-    def init(self):
-        self.album = False
+    def urlsetup(self):
+        self.isalbum = False
         self.targetstorage = "URL Downloads"
-
-    def summary(self):
-
-        release = {self.artist: self.songs}
-
-        return release
 
     def update(self, infoobj):
         """Update values of the success dict variable with new """
@@ -38,4 +32,4 @@ class Information:
 
     def filterwords(self):
         """Return words that are used when filtering out video results"""
-        return self.artist.split() + self.release.split()
+        return self.artist.split() + self.album.split()

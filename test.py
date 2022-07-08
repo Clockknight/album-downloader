@@ -31,6 +31,10 @@ def result():
     io.historystorage = checkhistory()
     print(readhistory(io))
 
+searchinput(0, "Ken Ashcorp")
+searchinput(0, "Mystery Skulls")
+
+'''
 thing = input("You're running test.py. This is going to clear your history.json, press enter to continue.")
 
 testclear()
@@ -41,9 +45,9 @@ result()
 searchinput(0, "Siames")
 result()
 
-'''
 urlinput("https://www.youtube.com/watch?v=BKUa0ISxhvQ")
 searchinput(1, "20 Percent Cooler")
-print(readhistory(checkhistory()))'''
+print(readhistory(checkhistory()))
 
 testclear()
+'''

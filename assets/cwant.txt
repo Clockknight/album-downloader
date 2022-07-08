@@ -7,11 +7,9 @@ cake
 capital cities
 Caravan Palace
 Circa Waves
-clattanoia
 country road
 Crowder
 cynthia harrel
-Daniel Ingram
 Deadmau5
 deltarune
 Devil May Cry Soundtrack 1-5
@@ -25,11 +23,7 @@ Fatboy Slim
 Foster the People
 Franz Ferdinand
 fujiya & miyagi
-gettin jiggy wit it
-gimme gimme gimme
 girls generation
-guilty gear strive
-Hamilton
 Jamiroquai
 jhariah
 Jim croce
@@ -42,11 +36,9 @@ lil darkie
 lil mosie
 mariya tekuchi
 men at work
-mercy
 metal gear
 michael jackson
 mighty switch force
-Miike Snow
 mindless self indulgence
 murray head
 Panic at the Disco
@@ -64,7 +56,6 @@ shantae
 siames
 slipknot
 st vincent
-starcraft
 sturgil simpson
 talking heads
 Tame impala
@@ -74,9 +65,17 @@ The silent comedy
 the white stripes
 tim legend
 Trocadero
-undertale
 we are castor
-weird part of the night
 will joseph cook
 yuni wa
-triple-q
+
+
+undertale
+guilty gear strive
+weird part of the night
+starcraft
+Hamilton
+clattanoia
+gettin jiggy wit it
+gimme gimme gimme
+mercy
