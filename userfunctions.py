@@ -13,7 +13,6 @@ import json
 import re
 import os
 
-# TODO make multiple passes through each video when looking through a song
 # TODO include "artist (###)" in perfect match results in searchinput()
 """
 First pass, look for each word in the release name, song name in the title, artist name in title and channel name
@@ -276,8 +275,6 @@ def processrelease(query):
 
     infoobject.songs = songlistin(soup)
     infoobject.history = readhistory(infoobject)
-    # TODO make code update with empty dict of artist and current release, in case either haven't been looked at before
-    # this is so with the clearer infoobject, the code will actually skip over previously downloaded songs
     writehistory(infoobject)
     infoobject = downloadlistofsongs(infoobject)
     # Call to write history to UPDATE with the songs that have been downloaded.
@@ -335,7 +332,6 @@ def downloadlistofsongs(infoobject):
             if vidlen not in range(int(songlen * .85), int(songlen * 1.25)) and songlen != 0:
                 continue  # Try again with next video if it's out of range
 
-            # TODO Improve this filter further by somehow compacting into a single regex, with the same restrictions
             if searchresultfilter(infoobject, video):
                 break
 
@@ -474,8 +470,9 @@ def checkhistory(infoobject=Information()):
 def writehistory(infoobject, overwriteHist=None):
     """Assume:
         infoobject is an Information object with information on new songs that have been downloaded.
-        History.json exists prior to now
-    Update values in history json with given values."""
+        History.json file exists
+    Update values in history.json with given values.
+    If overwriteHist is specified, overwrite history.json with it"""
 
     # Case where no overwrite history is provided
     histdir, newhist = infoobject.historyvar()
@@ -485,7 +482,7 @@ def writehistory(infoobject, overwriteHist=None):
     if curartist in totalhist:
         if len(totalhist[curartist]) == 1:
             if infoobject.album in totalhist[curartist]:
-            # if the last two tests passed that means this is the first release to be processed, and this is the second writehistory call on that release
+                # if the last two tests passed that means this is the first release to be processed, and this is the second writehistory call on that release
                 totalhist[curartist][infoobject.album] = {}
         totalhist[curartist].update(newhist[curartist])
     else:
@@ -501,7 +498,7 @@ def writehistory(infoobject, overwriteHist=None):
     f.write(result)
     f.close()
 
-
+ # TODO  Find way to cut off dead air before and after song plays
 def readhistory(infoobject=Information()):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
@@ -566,6 +563,15 @@ def getuseroption(tagarray):
 
 
 def searchresultfilter(infoobject, video):
+    """Given information from the infoobject, check if the video is within expectations of the song.
+    """
+    # TODO make multiple passes through each video when looking through a song
+    '''
+    Stages of filtering
+    
+    '''
+
+    # TODO Change filter words to return two different things, words in the artist, then words in the album and songname
     filterwords = infoobject.filterwords()
     failwords = []
 
