@@ -1,4 +1,248 @@
 {
+    "BH": {
+        " Chain On / Hold Me": {
+            "Chain On / Hold Me": 332
+        },
+        " Fishbone": {
+            "Fishbone": 236
+        }
+    },
+    "BROCKHAMPTON": {
+        "Ginger": {
+            "Big Boy": 235,
+            "Boy Bye": 142,
+            "Dearly Departed": 280,
+            "Ginger": 234,
+            "Heaven Belongs To You": 89,
+            "I Been Born Again": 219,
+            "If You Pray Right": 302,
+            "Love Me For Life": 215,
+            "No Halo": 259,
+            "St. Percy": 210,
+            "Sugar": 204,
+            "Victor Roberts": 263
+        }
+    },
+    "Brockhampton": {
+        ". Dua Lipa \u2013 Sugar (Remix)": {
+            "Sugar (Remix)": 222
+        },
+        "1997 Diana": {
+            "1997 Diana": 135
+        },
+        "1998 Truman": {
+            "1998 Truman": 245
+        },
+        "1999 Wildfire": {
+            "1999 Wildfire": 251
+        },
+        "All-American Trash": {
+            "Ben Carson": 141,
+            "Breakfast": 84,
+            "Contacts": 91,
+            "Cotton Hollow": 253,
+            "Encino": 110,
+            "Flip Mo": 139,
+            "Home": 302,
+            "Infatuation": 181,
+            "Lost In Love": 261,
+            "Michigan": 183,
+            "Mosscliff": 116,
+            "Palace": 249,
+            "Poison": 189
+        },
+        "Boy Bye": {
+            "Boy Bye": 142
+        },
+        "Cannon": {
+            "Cannon": 280
+        },
+        "Count On Me": {
+            "Count On Me": 155
+        },
+        "Dirt": {
+            "Dirt": 286
+        },
+        "Face": {
+            "Face": 259
+        },
+        "Gold": {
+            "Gold": 266
+        },
+        "Gummy": {
+            "Gummy": 260
+        },
+        "Heat": {
+            "Heat": 272
+        },
+        "I Been Born Again": {
+            "I Been Born Again": 219
+        },
+        "If You Pray Right": {
+            "If You Pray Right": 320
+        },
+        "Iridescence": {
+            "Berlin": 199,
+            "District": 211,
+            "Fabric": 277,
+            "Honey": 195,
+            "J'Ouvert": 234,
+            "Loophole": 53,
+            "New Orleans": 243,
+            "San Marcos": 286,
+            "Something About Him": 93,
+            "Tape": 209,
+            "Thug Life": 123,
+            "Tonya": 283,
+            "Vivid": 144,
+            "Weight": 260,
+            "Where The Cash At": 114
+        },
+        "Junky": {
+            "Junky": 249
+        },
+        "No Halo": {
+            "No Halo": 260
+        },
+        "Roadrunner: New Light, New Machine": {
+            "Bankroll": 202,
+            "Buzzcut": 201,
+            "Chain On": 201,
+            "Count On Me": 155,
+            "Dear Lord": 122,
+            "Don't Shoot Up The Party": 187,
+            "I'll Take You On": 254,
+            "Old News": 193,
+            "The Light": 222,
+            "The Light Pt. II": 258,
+            "What's The Occasion": 225,
+            "When I Ball": 203,
+            "Windows": 371
+        },
+        "Saturation": {
+            "2pac": 62,
+            "Alaska": 199,
+            "Bleach": 273,
+            "Boogie": 193,
+            "Chick": 204,
+            "Cinema 1": 46,
+            "Cinema 2": 39,
+            "Cinema 3": 51,
+            "Fight": 181,
+            "Gamba": 202,
+            "Gummy": 261,
+            "Hottie": 197,
+            "Jello": 240,
+            "Jesus": 80,
+            "Johnny": 252,
+            "Junky": 249,
+            "Lamb": 576,
+            "Liquid": 82,
+            "Queer": 228,
+            "Rental": 214,
+            "Scene 2": 30,
+            "Sister/Nation": 365,
+            "Skit 1": 19,
+            "Skit 2": 15,
+            "Skit 3": 39,
+            "Stains": 179,
+            "Summer": 205,
+            "Sunny": 171,
+            "Swamp": 252,
+            "Sweet": 274,
+            "Team": 274,
+            "Teeth": 80,
+            "Tokyo": 192,
+            "Zipper": 202
+        },
+        "Saturation II": {
+            "Chick": 204,
+            "Fight": 181,
+            "Gamba": 202,
+            "Gummy": 261,
+            "Jello": 240,
+            "Jesus": 80,
+            "Junky": 248,
+            "Queer": 227,
+            "Scene": 39,
+            "Scene 2": 30,
+            "Summer": 204,
+            "Sunny": 170,
+            "Swamp": 252,
+            "Sweet": 274,
+            "Teeth": 80,
+            "Tokyo": 192
+        },
+        "Saturation III": {
+            "Alaska": 199,
+            "Bleach": 273,
+            "Boogie": 193,
+            "Cinema 1": 46,
+            "Cinema 2": 39,
+            "Cinema 3": 51,
+            "Hottie": 197,
+            "Johnny": 252,
+            "Liquid": 82,
+            "Nation": 136,
+            "Rental": 214,
+            "Sister": 228,
+            "Stains": 179,
+            "Stupid": 217,
+            "Team": 274,
+            "Zipper": 202
+        },
+        "Swamp": {
+            "Swamp": 251
+        },
+        "at. Danny Brown (2) \u2013 Buzzcut": {
+            "Buzzcut": 201
+        }
+    },
+    "C2C": {
+        "Delta": {
+            "Delta": 224
+        },
+        "Down The Road": {
+            "Arcades": 264,
+            "Down The Road": 205,
+            "Someday": 313,
+            "The Beat": 210
+        },
+        "Flyin' Saucer - Straight From Outter Space Breaks": {
+            "Fresh Invaders": 0
+        },
+        "Flyin' Saucer 2 - Straight From Hyper Space Breaks": {
+            "": {}
+        },
+        "Flyin' Saucer Breaks 3": {
+            "": {}
+        },
+        "Happy": {
+            "Happy": 234
+        },
+        "Ortofon Presents: 3 Times In A Row!!!": {
+            "20Syl Beat Making": 0
+        },
+        "Tetra": {
+            "Arcades": 264,
+            "Because Of You": 222,
+            "Delta": 224,
+            "Down The Road": 207,
+            "F.U.Y.A.": 305,
+            "Genius": 250,
+            "Give Up The Ghost": 324,
+            "Happy": 235,
+            "Kings Season": 231,
+            "Le Banquet": 296,
+            "The Beat": 212,
+            "The Cell": 299,
+            "Together": 291,
+            "Who Are You": 291
+        },
+        "The Beat": {
+            "The Beat": 210
+        }
+    },
     "Carpenter Brut": {
         "Blood Machines (Original Motion Picture Soundtrack)": {
             "Attack Of The Amazons": 199,
@@ -1470,9 +1714,6 @@
         "Take Me Home": {
             "Take Me Home": 181
         },
-        "Tasteless": {
-            "Tasteless": 146
-        },
         "The Bunny Song": {
             "The Bunny Song": 124
         },
@@ -1590,101 +1831,34 @@
     },
     "Mystery Skulls": {
         "Back To Life": {
-            "Back To Life": 198,
-            "Dont Fuck With My Money": 157,
-            "Enemy": 176,
-            "Get In The Car": 180,
-            "In My Dreams": 242,
-            "Its Mine": 158,
-            "Memory": 109,
-            "Stronger": 185,
-            "What Love Is": 218,
-            "Without You": 191
+            "": {}
         },
         "Beam Me Up": {
-            "3000 Lightyears": 206,
-            "All Time High": 206,
-            "Be With You": 247,
-            "Beam Me Up": 215,
-            "Invincible": 260,
-            "Keep On Living": 197,
-            "Pleasure": 291,
-            "Put My Records On": 239,
-            "Time Machine": 278
+            "": {}
         },
         "EP": {
-            "Amazing": 205,
-            "Beautiful": 193,
-            "Brainsick": 169,
-            "Money": 218,
-            "You": 175
+            "": {}
         },
         "Forever": {
-            "Body High": 201,
-            "Every Note": 308,
-            "Fantasy": 193,
-            "Forever": 200,
-            "Ghost": 259,
-            "Hellbent": 173,
-            "Magic": 269,
-            "Number 1": 223,
-            "Paralyzed": 188,
-            "The Future": 224,
-            "When I'm With You": 233
+            "": {}
         },
         "I 2 I": {
-            "I 2 I": 238
+            "": {}
         },
         "Magic": {
-            "Magic": 269
+            "": {}
         },
         "Now or Never": {
-            "Calling My Number": 226,
-            "Far Away": 200,
-            "Glass Casket": 137,
-            "God": 258,
-            "Heaven": 266,
-            "Nothing Can Stop Us Now": 154,
-            "Now Or Never": 144,
-            "Oh What A Feeling": 198,
-            "You Can't Change Me": 184
+            "": {}
         },
         "One Of Us": {
-            "Endlessly": 168,
-            "Erase Me": 159,
-            "Find A Way": 253,
-            "Follow You": 218,
-            "Live Forever": 173,
-            "Losing My Mind": 179,
-            "Music ": 204,
-            "On Fire": 144,
-            "One Of Us": 195,
-            "Told Ya": 128
+            "": {}
         },
         "Ultra Rare Vol 1": {
-            "555": 187,
-            "Dream": 197,
-            "Fake": 173,
-            "Freaking Out": 213,
-            "Got You": 174,
-            "Higher": 183,
-            "In My Sleep": 193,
-            "Keep It Together": 202,
-            "Losin My Soul": 211,
-            "Soul On Fire": 250,
-            "Thismaybetheyear": 97,
-            "Together": 249
+            "": {}
         },
         "Ultra Rare Vol 2": {
-            "Feel It": 147,
-            "I Don't Love You": 228,
-            "I Should Be Loving You": 270,
-            "Love": 180,
-            "No One Ever Really Dies": 219,
-            "Pay For My Sins": 158,
-            "Sweet Escape": 216,
-            "Under Your Spell": 61,
-            "Who Are We": 83
+            "": {}
         }
     },
     "OK Go": {
@@ -1925,6 +2099,31 @@
             "This Too Shall Pass (Passion Pit Remix)": 0,
             "White Knuckles (Boys Like Us Remix)": 0,
             "White Knuckles (Neil Voss Remix)": 0
+        }
+    },
+    "Various": {
+        "Devil May Cry 5 - Original Soundtrack": {
+            "Abyssal Time": 0,
+            "Blazing Muscle": 0,
+            "Crimson Cloud": 0,
+            "Devil May Cry 5 Titlescreen": 0,
+            "Devil Trigger": 0,
+            "Diabolical Incantation": 0,
+            "Feel The Shock": 0,
+            "Improvisation For Violin On A Main Theme \"Legacy\"": 0,
+            "Legacy (DMC5 Main Theme)": 0,
+            "Legacy (Piano Improv Version)": 0,
+            "Lunatic Ray": 0,
+            "Psycho Machine": 0,
+            "Silver Bullet": 0,
+            "Splitting Fool": 0,
+            "Subhuman": 0,
+            "The Duel": 0,
+            "Unavoidable Despair": 0,
+            "Unbearable Pressure": 0,
+            "Undeniable Fate": 0,
+            "Unwavering Bravery": 0,
+            "Voltaic Black Knight": 0
         }
     }
 }

@@ -1,8 +1,6 @@
 AJR
 alkaline trio
 bring me the horizon
-brockhampton
-C2C
 cake
 capital cities
 Caravan Palace
@@ -10,18 +8,11 @@ Circa Waves
 country road
 Crowder
 cynthia harrel
-Deadmau5
-deltarune
-Devil May Cry Soundtrack 1-5
-Devil May Cry Soundtrack Pachinko?
 doja cat
-doom
 dua lipa
 dvrst
 eddy grant
 Fatboy Slim
-Foster the People
-Franz Ferdinand
 fujiya & miyagi
 girls generation
 Jamiroquai
@@ -35,28 +26,19 @@ lil boodang
 lil darkie
 lil mosie
 mariya tekuchi
-men at work
-metal gear
 michael jackson
 mighty switch force
 mindless self indulgence
 murray head
-Panic at the Disco
-payday 2
 porno grafitti
 powerwolf
 Psy
 rasputin
 red hot chili peppers
-redline Soundtrack
-saint motel
 salvatore ganacci
-sassou to hashiru tonegawa
 shantae
-siames
 slipknot
 st vincent
-sturgil simpson
 talking heads
 Tame impala
 The Correspondents
@@ -64,11 +46,9 @@ the kid laroi
 The silent comedy
 the white stripes
 tim legend
-Trocadero
 we are castor
 will joseph cook
 yuni wa
-
 
 undertale
 guilty gear strive
@@ -79,3 +59,11 @@ clattanoia
 gettin jiggy wit it
 gimme gimme gimme
 mercy
+deltarune
+Devil May Cry Soundtrack 1-5
+Devil May Cry Soundtrack Pachinko?
+sassou to hashiru tonegawa
+redline Soundtrack
+doom
+metal gear
+payday 2

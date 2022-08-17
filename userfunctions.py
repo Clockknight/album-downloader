@@ -13,6 +13,9 @@ import json
 import re
 import os
 
+# TODO Fix the console printing out part of the artist's name when downloading GG OST
+# TODO Fix other people being included into history when some releases have the current artist as a side artist
+# TODO Include album #/# when printing "downloading album" message
 # TODO include "artist (###)" in perfect match results in searchinput()
 """
 First pass, look for each word in the release name, song name in the title, artist name in title and channel name
@@ -172,11 +175,11 @@ def searchprocess(word, searchterm):
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
 
     # Creates a list from all the divs that make up the cards
-    divlist = soup.find_all('div', {"class": "card_large"})
+    elems = soup.find_all('li', {"role": "listitem"})
 
     # Go through each div, each one has a release/artist with a link out
-    for div in divlist:
-        result.append(div.find('h4').find('a'))
+    for e in elems:
+        result.append(e.find('div', {"class": "card-release-title"}).find('a'))
         title = result[-1]['title'].lower()
 
         # If looking for artist, it takes first perfect match and escapes
