@@ -298,20 +298,19 @@ def downloadlistofsongs(infoobject):
         infoobject.cursong = songname
         print('\t\tDownloading - ' + songname)
 
-        res = Search(writable(infoobject.album + ' ' + infoobject.artist + ' song ' + songname)).results
-        loop = len(res)
-        songlen = infoobject.songs[songname]
-        if songlen == 0:
-            print('\r\t\tNo song length found. Result may be inaccurate.')
-
-        # TODO uncomment the block when the function from pytube works
-        '''
-        # Codeblock that doesnt work, pytube get_next_results() raises indexerror
+        res = Search(writable(infoobject.album + ' ' + infoobject.artist + ' song ' + songname))
+        res.results
+        loop = len(res.results)
         # loop to check at least 100 videos, get_next_results doesnt pull consistent amount of videos
         while loop < 100:
             res.get_next_results()
             loop = len(res.results)
-        '''
+        res= res.results
+
+        songlen = infoobject.songs[songname]
+        if songlen == 0:
+            print('\r\t\tNo song length found. Result may be inaccurate.')
+
 
         # Nested if checks to see if artist, album, and song are all used
         if infoobject.artist in infoobject.history:
