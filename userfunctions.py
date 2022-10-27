@@ -400,7 +400,7 @@ def tagsong(target, infoobject):
     if infoobject.art != 'fail':  # Check if coverart is actually valid
         coverart = infoobject.art.url
 
-        filename = os.path.join(infoobject.targetstorage, writable(infoobject.album) + ".jpeg")
+        filename = os.path.join(infoobject.targetstorage, writable(infoobject.album) + ".jpg")
         r = requests.get(coverart, stream=True)
         r.raw.decode_content = True
 
@@ -408,7 +408,7 @@ def tagsong(target, infoobject):
             shutil.copyfileobj(r.raw, f)
 
         with open(filename, "rb") as f:
-            tagtarget.images.set(3, f.read(), "image/jpeg")
+            tagtarget.images.set(3, f.read(), "image/jpg")
         infoobject.art = "fail"
 
         os.remove(filename)
@@ -573,8 +573,8 @@ def searchresultfilter(infoobject, video):
     
     '''
 
-    # TODO Change filter words to return two different things, words in the artist, then words in the album and songname
-    filterwords = infoobject.filterwords()
+    # retrieve
+    artist_filter, album_song_filter = infoobject.filterwords()
     failwords = []
 
     try:

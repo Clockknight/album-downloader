@@ -33,7 +33,7 @@ class Information:
 
     def filterwords(self):
         """Return words that are used when filtering out video results"""
-        return self.artist.split() + self.album.split()
+        return self.cleanartist.split(), self.album.split() + self.cursong.split()
 
     def setartist(self, inartist):
         self.artist = inartist
