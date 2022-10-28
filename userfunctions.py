@@ -22,6 +22,7 @@ First pass, look for each word in the release name, song name in the title, arti
 Second pass, also look through the videos' descriptions when looking for words in title, release name, artist name
 """
 
+headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
 def optionselect():
     """Text menu for user to choose option"""
@@ -169,7 +170,7 @@ def searchprocess(word, searchterm):
     searchterm = searchterm.lower()
     urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word  # makes url to search for results
-    page = requests.get(query)
+    page = requests.get(query, headers=headers)
 
     # Codeblock to try and find albums based on mode provided
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
@@ -364,6 +365,8 @@ def downloadlistofsongs(infoobject):
 def downloadsong(ytobj, infoobject):
     """Download MP3 from YouTube object. Return Bool based on if download was successful.
     Download as MP4 for now. Downloading the MP3 stream given causes issues when trying to edit MP3 tags."""
+    # TODO  Find way to cut off dead air before and after song plays
+    # https://stackoverflow.com/questions/29547218/remove-silence-at-the-beginning-and-at-the-end-of-wave-files-with-pydub
     try:
         video = ytobj.streams.filter(type="video")
     except KeyError:
@@ -500,7 +503,7 @@ def writehistory(infoobject, overwriteHist=None):
     f.write(result)
     f.close()
 
- # TODO  Find way to cut off dead air before and after song plays
+
 def readhistory(infoobject=Information()):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
