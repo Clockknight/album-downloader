@@ -22,7 +22,9 @@ First pass, look for each word in the release name, song name in the title, arti
 Second pass, also look through the videos' descriptions when looking for words in title, release name, artist name
 """
 
-headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+
 
 def optionselect():
     """Text menu for user to choose option"""
@@ -306,12 +308,11 @@ def downloadlistofsongs(infoobject):
         while loop < 100:
             res.get_next_results()
             loop = len(res.results)
-        res= res.results
+        res = res.results
 
         songlen = infoobject.songs[songname]
         if songlen == 0:
             print('\r\t\tNo song length found. Result may be inaccurate.')
-
 
         # Nested if checks to see if artist, album, and song are all used
         if infoobject.artist in infoobject.history:
@@ -366,7 +367,6 @@ def downloadsong(ytobj, infoobject):
     """Download MP3 from YouTube object. Return Bool based on if download was successful.
     Download as MP4 for now. Downloading the MP3 stream given causes issues when trying to edit MP3 tags."""
     # TODO  Find way to cut off dead air before and after song plays
-    # https://stackoverflow.com/questions/29547218/remove-silence-at-the-beginning-and-at-the-end-of-wave-files-with-pydub
     try:
         video = ytobj.streams.filter(type="video")
     except KeyError:
@@ -522,15 +522,15 @@ def readhistory(infoobject=Information()):
 
 def parsetime(instring):
     """Convert hh:mm:ss strings into int value in seconds."""
-    # TODO raise error if string is not in format of digits and colons
-    timere = re.compile("\d+")
-    colre = re.findall(':', instring)
-    iter = len(colre)
+    if re.fullmatch("\d[\d:]*\d", instring) is None:
+        raise Exception
+    numbers = instring.split(":")
+    iteration = len(numbers) - 1
     result = 0
 
-    for value in re.findall(timere, instring):
+    for value in numbers:
         value = int(value)
-        match (iter):
+        match iteration:
             # if 2nd iteration, then assume previous numbers are in seconds, convert to  minutes
             case 1:
                 value *= 60
@@ -544,13 +544,13 @@ def parsetime(instring):
                 value *= 24
 
         result += value
-        iter -= 1
+        iteration -= 1
 
     return result
 
 
 def getuseroption(tagarray):
-    """Print out all of an array's item's, then ask user for an option."""
+    """Print out all of an array's items, then ask user for an option."""
     length = len(tagarray)
     option = -1
     max_display = 20
@@ -561,13 +561,9 @@ def getuseroption(tagarray):
     if not length or length is 1:
         return length
 
-    full_range = range(1, length)
-    len_range = range(1, length)
+    while True:
 
-    # TODO Convert this into dowhile loop so len_range is calculated on first loop inside
-    while option not in len_range:
-
-        if cnt >= int(length/max_display):
+        if cnt >= int(length / max_display):
             cnt = -1
 
         cnt += 1
@@ -578,9 +574,12 @@ def getuseroption(tagarray):
             display += str(i) + ": " + tagarray[i - 1]['title'] + "\n"
 
         if length > max_display:
-            display += "Input a number outside of the current displayed to show the next {} results.".format(max_display)
+            display += "Input a number outside of the current displayed to show the next {} results.".format(
+                max_display)
 
         option = input(display)
+        if option in len_range:
+            return option
 
     return option
 
