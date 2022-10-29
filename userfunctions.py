@@ -551,18 +551,36 @@ def parsetime(instring):
 
 def getuseroption(tagarray):
     """Print out all of an array's item's, then ask user for an option."""
-    # TODO Make this only print out 20 at a time and let user go back and forth
     length = len(tagarray)
-    if not length or length == 1:
-        return length
     option = -1
-    lenran = range(1, length)
+    max_display = 20
+    cnt = -1
     display = ""
-    for i in lenran:
-        display += str(i) + ": " + tagarray[i - 1]['title'] + "\n"
 
-    while option not in lenran:
-        option = int(input(display))
+    # Return 0 or 1 if the array is empty or has 1 object respectively
+    if not length or length is 1:
+        return length
+
+    full_range = range(1, length)
+    len_range = range(1, length)
+
+    # TODO Convert this into dowhile loop so len_range is calculated on first loop inside
+    while option not in len_range:
+
+        if cnt >= int(length/max_display):
+            cnt = -1
+
+        cnt += 1
+
+        len_range = range(max_display * cnt + 1, min(length, max_display * (cnt + 1) + 1))
+
+        for i in len_range:
+            display += str(i) + ": " + tagarray[i - 1]['title'] + "\n"
+
+        if length > max_display:
+            display += "Input a number outside of the current displayed to show the next {} results.".format(max_display)
+
+        option = input(display)
 
     return option
 
