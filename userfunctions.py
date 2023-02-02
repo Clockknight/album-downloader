@@ -13,14 +13,15 @@ import json
 import re
 import os
 
-# TODO Fix the console printing out part of the artist's name when downloading GG OST
-# TODO Fix other people being included into history when some releases have the current artist as a side artist
+# TODO Fix the console only printing out part of the artist's name when downloading GG OST
 # TODO Include album #/# when printing "downloading album" message
 # TODO include "artist (###)" in perfect match results in searchinput()
 """
 First pass, look for each word in the release name, song name in the title, artist name in title and channel name
 Second pass, also look through the videos' descriptions when looking for words in title, release name, artist name
 """
+
+
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
@@ -262,6 +263,8 @@ def processrelease(query):
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artistname = name.find('a').text
+    # TODO Fix other people being included into history when some releases have the current artist as a side artist
+    # going to need to move this outside of the scope of this function so it doesnt guess
     infoobject.setartist(artistname)  # separate artist
     infoobject.album = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
@@ -558,7 +561,7 @@ def getuseroption(tagarray):
     display = ""
 
     # Return 0 or 1 if the array is empty or has 1 object respectively
-    if not length or length is 1:
+    if not length or length == 1:
         return length
 
     while True:
