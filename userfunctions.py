@@ -166,14 +166,15 @@ def redownload():
 # Functions to parse information
 
 
-def searchprocess(word, searchterm):
+def searchprocess(word, search_term):
     """Parse relevant information and call to appropriate function."""
     result = []
     matches = []
-    searchterm = searchterm.lower()
-    urlterm = urllib.parse.quote_plus(searchterm)  # Makes artist string OK for URLs
+    search_term = search_term.lower()
+    urlterm = urllib.parse.quote_plus(search_term)  # Makes artist string OK for URLs
     query = 'https://www.discogs.com/search/?q=' + urlterm + '&type=' + word  # makes url to search for results
     page = requests.get(query, headers=headers)
+    infoobject = Information()
 
     # Codeblock to try and find albums based on mode provided
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
@@ -187,7 +188,8 @@ def searchprocess(word, searchterm):
         title = result[-1]['title'].lower()
 
         # If looking for artist, it takes first perfect match and escapes
-        if title == searchterm and word == 'artist':  # compare input to card's title
+        if title == search_term and word == 'artist':  # compare input to card's title
+            infoobject.setartist(search_term)
             matches.append(result[-1])
             result.pop(-1)
 
@@ -207,11 +209,11 @@ def searchprocess(word, searchterm):
         processrelease("https://discogs.com" + result["href"])
     else:
         # Only artist mode has multipage support (Not an issue yet?)
-        parseartist("https://discogs.com" + result["href"] + "?page=")
+        parseartist("https://discogs.com" + result["href"] + "?page=", infoobject)
 
 
-def parseartist(query):
-    """Parse artist, calling parseartistpage for each page. Return formatted list of songs downloaded."""
+def parseartist(query, infoobject):
+    """Parse artist, calling parseartistpage() for each page. Return formatted list of songs downloaded."""
     # TODO include method to get releases the artist is only credited in
     index = 1
 
@@ -228,7 +230,7 @@ def parseartist(query):
             break
         # Process every release found
         for release in releases:
-            processrelease(release)
+            processrelease(release, infoobject)
         # go to next page of artist
         index += 1
 
@@ -249,10 +251,9 @@ def parseartistpage(query):
     return results
 
 
-def processrelease(query):
+def processrelease(query, infoobject=Information()):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     # TODO Check if multiple versions from different artists exist, get one with most songs
-    infoobject = Information()
     #  tryexcept for passed query
     try:
         page = requests.get(query)  # Use requests on the new URL
