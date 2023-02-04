@@ -1,3 +1,8 @@
+import os
+
+from userfunctions import writable
+
+
 class Information:
     def __init__(self):
         self.album = ''
@@ -18,9 +23,14 @@ class Information:
         self.songcount = 0
         self.totalcount = 0
 
+
+    def SetupTest(self):
+        self.histstorage = "./test/history.json"
+        self.targetstorage = "./test/"
+
     def urlsetup(self):
         self.isalbum = False
-        self.targetstorage = "URL Downloads"
+        self.targetstorage += "URL Downloads"
 
     def update(self, infoobj):
         """Update values of the success dict variable with new """
@@ -44,3 +54,6 @@ class Information:
             self.success = newdict
         else:
             self.success.update(newdict)
+
+    def setStorage(self):
+        self.targetstorage = os.path.join(self.targetstorage, "Downloads", writable(self.artist), writable(self.album))

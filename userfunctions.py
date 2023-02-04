@@ -1,3 +1,4 @@
+import sys
 from json import JSONDecodeError
 import eyed3
 import urllib
@@ -280,7 +281,7 @@ def processrelease(query, infoobject=Information()):
 
     # Preparing directory to download song
     # create folder for artist, and subfolder for release
-    infoobject.targetstorage = os.path.join("Downloads", writable(infoobject.artist), writable(infoobject.album))
+    infoobject.setstorage()
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
 
     infoobject.songs = songlistin(soup)
