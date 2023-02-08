@@ -190,7 +190,7 @@ def searchprocess(word, search_term):
 
         # If looking for artist, it takes first perfect match and escapes
         if title == search_term and word == 'artist':  # compare input to card's title
-            infoobject.setartist(search_term)
+            infoobject.setArtist(search_term)
             matches.append(result[-1])
             result.pop(-1)
 
@@ -253,49 +253,51 @@ def parseartistpage(query):
     return results
 
 
-def processrelease(query, infoobject=Information()):
+def processrelease(query, current_information=Information()):
     """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
     # TODO Check if multiple versions from different artists exist, get one with most songs
     #  tryexcept for passed query
     try:
         page = requests.get(query, headers=headers)  # Use requests on the new URL
-        if page.status_code == 403:
-            raise ConnectionError
+        if page.status_code != 200:
+            raise ConnectionError(page.status_code)
         soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
-    except ConnectionError:
-        print("Connection Error. Copy Console Output and talk about it in the issues page.")
-        sys.exit()
-    except:
+    except ConnectionError as e:
+        print(e)
         print('Error: failure processing album. Link provided - ' + query)
+        print("Connection Error. Copy Console Output and talk about it in the issues page.")
         return
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artistname = name.find('a').text
     # TODO Fix other people being included into history when some releases have the current artist as a side artist
     # going to need to move this outside of the scope of this function so it doesnt guess
-    infoobject.setartist(artistname)  # separate artist
-    infoobject.album = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
+    current_information.setArtist(artistname)  # separate artist
+    current_information.album = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
 
-    print('\n\tDownloading Album - ' + infoobject.album)
+    print('\n\tDownloading Album - ' + current_information.album)
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
     try:
-        infoobject.art = requests.get("https://discogs.com" + coverart.find('a')['href'])
-    except:
+        art_url = "https://discogs.com" + coverart.find('a')['href']
+        current_information.art = requests.get(art_url)
+        if current_information.art.status_code != 200:
+            raise ConnectionError(current_information.art.status_code)
+    except ConnectionError as e:
         # Let the user know the album art isn't available
-        print('\t\tMissed Tag: Problem getting album art - ' + infoobject.album)
-        infoobject.art = 'fail'  # set it to fail for mp3 tag check
+        print('\t\tMissed Tag: Problem getting album art - {} - {}'.format(e.args[0], current_information.album))
+        current_information.art = 'fail'  # set it to fail for mp3 tag check
 
     # Preparing directory to download song
     # create folder for artist, and subfolder for release
-    infoobject.setstorage()
-    os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
+    current_information.setStorage()
+    os.makedirs(current_information.targetstorage, exist_ok=True)  # Make the folder
 
-    infoobject.songs = songlistin(soup)
-    infoobject.history = readhistory(infoobject)
-    writehistory(infoobject)
-    infoobject = downloadlistofsongs(infoobject)
+    current_information.songs = songlistin(soup)
+    current_information.history = readhistory(current_information)
+    writehistory(current_information)
+    current_information = downloadlistofsongs(current_information)
     # Call to write history to UPDATE with the songs that have been downloaded.
-    writehistory(infoobject)
+    writehistory(current_information)
 
 
 # Functions that download albums or songs, after parsing info

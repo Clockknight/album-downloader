@@ -45,9 +45,10 @@ class Information:
         """Return words that are used when filtering out video results"""
         return self.cleanartist.split(), self.album.split() + self.cursong.split()
 
-    def setartist(self, inartist):
-        self.artist = inartist
-        self.history = {inartist: {}}
+    def setArtist(self, given_artist):
+        self.artist = given_artist
+        self.cleanartist = given_artist  #TODO remove (n) when it's present at the end of the artist variable
+        self.history = {given_artist: {}}
 
     def updatesuccess(self, newdict):
         if self.success == {"": {}}:
@@ -57,3 +58,4 @@ class Information:
 
     def setStorage(self):
         self.targetstorage = os.path.join(self.targetstorage, "Downloads", userfunctions.writable(self.artist), userfunctions.writable(self.album))
+
