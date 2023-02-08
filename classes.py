@@ -1,6 +1,6 @@
 import os
 
-from userfunctions import writable
+import userfunctions
 
 
 class Information:
@@ -56,4 +56,4 @@ class Information:
             self.success.update(newdict)
 
     def setStorage(self):
-        self.targetstorage = os.path.join(self.targetstorage, "Downloads", writable(self.artist), writable(self.album))
+        self.targetstorage = os.path.join(self.targetstorage, "Downloads", userfunctions.writable(self.artist), userfunctions.writable(self.album))

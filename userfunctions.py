@@ -224,6 +224,7 @@ def parseartist(query, infoobject):
             releases = parseartistpage(query + str(index))
         except AttributeError as e:
             print(e)
+            print("Please copy console output and send to the issues page.")
             break
 
         # if nothing is returned from above, break out (query for parseartistpage was an empty page)
@@ -239,7 +240,7 @@ def parseartist(query, infoobject):
 def parseartistpage(query):
     """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
-    soup = requests.get(query)
+    soup = requests.get(query, headers=headers)
     soup = BeautifulSoup(soup.text, "html.parser")
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
@@ -257,8 +258,13 @@ def processrelease(query, infoobject=Information()):
     # TODO Check if multiple versions from different artists exist, get one with most songs
     #  tryexcept for passed query
     try:
-        page = requests.get(query)  # Use requests on the new URL
+        page = requests.get(query, headers=headers)  # Use requests on the new URL
+        if page.status_code == 403:
+            raise ConnectionError
         soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
+    except ConnectionError:
+        print("Connection Error. Copy Console Output and talk about it in the issues page.")
+        sys.exit()
     except:
         print('Error: failure processing album. Link provided - ' + query)
         return
@@ -622,7 +628,7 @@ def searchresultfilter(infoobject, video):
 
     # Try to find word in title
     # if it's not in title, track it, then check description
-    for word in filterwords:
+    for word in artist_filter:
         for vidword in videoname:
             if not temp and word.lower() in vidword:
                 failwords.append(word)
