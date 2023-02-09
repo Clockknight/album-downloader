@@ -23,10 +23,12 @@ class Information:
         self.songcount = 0
         self.totalcount = 0
 
+        self.test_mode = False
 
     def SetupTest(self):
         self.histstorage = "./test/history.json"
         self.targetstorage = "./test/"
+        self.test_mode = True
 
     def urlsetup(self):
         self.isalbum = False
@@ -57,5 +59,8 @@ class Information:
             self.success.update(newdict)
 
     def setStorage(self):
-        self.targetstorage = os.path.join(self.targetstorage, "Downloads", userfunctions.writable(self.artist), userfunctions.writable(self.album))
+        download_path ="Downloads"
+        if self.test_mode:
+            download_path = os.path.join("./Test",download_path)
+        self.targetstorage = os.path.join(download_path, userfunctions.writable(self.artist), userfunctions.writable(self.album))
 

@@ -24,43 +24,40 @@ searchinput(1, "20 Percent Cooler")
 print(readhistory(checkhistory()))
 
 testclear()
-
-
-
-class MyTestCase(unittest.TestCase):
-    def test_something(self):
-        self.assertEqual(True, False)  # add assertion here
-
-if __name__ == '__main__':
-    unittest.main()"""
-
 """
-import unittest
 
+
+import unittest
+from unittest import mock
 from userfunctions import *
 
+directories = [
+    "./Ken Ashcorp",
+    "/Various",
+    "./URL Downloads",
+    "./GGRIM",
+    "./Cxxlion"
+]
 
 class TestingClass(unittest.TestCase):
-    def __init__(self, thing):
+
+    '''def __init__(self, test):
         clearhistory()
-        directories = [
-            "./Ken Ashcorp",
-            "/Various",
-            "./URL Downloads",
-            "./GGRIM",
-            "./Cxxlion"
-        ]
+
 
         for dir in directories:
             os.makedirs(dir, exist_ok=True)
             shutil.rmtree(dir)
 
-    def test(self):
-        assert 1 == 1
+        pass'''
 
-"""
+    @mock.patch('userfunctions.input', create=True)
+    def test(self, mocked_input):
+        mocked_input.side_effect = ["./assets/cwant"]
+
+        assert 1==1
+        pass
 
 
-from userfunctions import *
 
-searchinput(0, "Ken Ashcorp")
+

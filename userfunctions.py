@@ -34,7 +34,7 @@ def optionselect():
 Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
 
 1) Cache Mode
-Provide a .txt file with links to album's google result pages, seperated by lines.
+Provide a .txt file with names of artists or releases, seperated by lines.
 
 2) Search Mode (Artist)
 Search for an artist's discography. The artist's discography will be stored in history.json
