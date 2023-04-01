@@ -153,19 +153,12 @@ Don't forget to give the project a star! Thanks again!
 
 
 
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
 
 
 <!-- CONTACT -->
 ## Contact
 
-Your Name - tylerf2wang@gmail.com
+Your Name - hello@tylerhanyinwang.com.com
 
 Project Link: [https://github.com/Clockknight/album-downloader](https://github.com/Clockknight/album-downloader)
 
