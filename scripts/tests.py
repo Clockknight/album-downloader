@@ -52,7 +52,14 @@ class TestingClass(unittest.TestCase):
         pass'''
 
     @mock.patch('userfunctions.input', create=True)
-    def test(self, mocked_input):
+    def test_urlinput(self, mocked_input):
+        mocked_input.side_effect = ["./assets/cwant"]
+
+        urlinput()
+
+        pass
+    @mock.patch('userfunctions.input', create=True)
+    def test2(self, mocked_input):
         mocked_input.side_effect = ["./assets/cwant"]
 
         assert 1==1
