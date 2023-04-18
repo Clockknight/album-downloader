@@ -55,7 +55,14 @@ class TestingClass(unittest.TestCase):
     def test_urlinput(self, mocked_input):
         mocked_input.side_effect = ["./assets/cwant"]
 
-        urlinput()
+        # download audio before running this script
+        # get hash somehow
+
+        # inside of script
+        # urlinput()
+        # get download
+        # get ITS hash somehow
+        # assert compare is equal
 
         pass
     @mock.patch('userfunctions.input', create=True)
