@@ -9,7 +9,7 @@ from pytube import YouTube, Search
 from bs4 import BeautifulSoup
 from moviepy.editor import *
 from moviepy.audio.fx.all import *
-from classes import *
+from scripts.classes import *
 import json
 import re
 import os
@@ -116,7 +116,8 @@ Input 1 if it is a release.
 
 def urlinput(url=None):
     """Download given YouTube URL as MP3."""
-    infoobject = Information().urlsetup()
+    infoobject = Information()
+    infoobject.urlsetup()
     os.makedirs(infoobject.targetstorage, exist_ok=True)  # Make the folder
     if url is None:
         url = input('\nPlease input the url of the video you want to download.\n\t')

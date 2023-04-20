@@ -26,10 +26,9 @@ print(readhistory(checkhistory()))
 testclear()
 """
 
-
 import unittest
 from unittest import mock
-from userfunctions import *
+from scripts.userfunctions import *
 
 directories = [
     "./Ken Ashcorp",
@@ -39,8 +38,8 @@ directories = [
     "./Cxxlion"
 ]
 
-class TestingClass(unittest.TestCase):
 
+class TestingClass(unittest.TestCase):
     '''def __init__(self, test):
         clearhistory()
 
@@ -51,7 +50,13 @@ class TestingClass(unittest.TestCase):
 
         pass'''
 
-    @mock.patch('userfunctions.input', create=True)
+    @mock.patch('scripts.userfunctions.input', create=True)
+    def test_unittest_environment(self, mocked_input):
+        mocked_input.side_effect = ["./assets/cwant"]
+        assert 1 == 1
+        pass
+
+    @mock.patch('scripts.userfunctions.input', create=True)
     def test_urlinput(self, mocked_input):
         mocked_input.side_effect = ["./assets/cwant"]
 
@@ -59,19 +64,10 @@ class TestingClass(unittest.TestCase):
         # get hash somehow
 
         # inside of script
-        # urlinput()
+        # download Ken Ashcorp - PPP
+        urlinput("https://www.youtube.com/watch?v=FVjeWMr8aLo")
         # get download
         # get ITS hash somehow
         # assert compare is equal
 
         pass
-    @mock.patch('userfunctions.input', create=True)
-    def test2(self, mocked_input):
-        mocked_input.side_effect = ["./assets/cwant"]
-
-        assert 1==1
-        pass
-
-
-
-
