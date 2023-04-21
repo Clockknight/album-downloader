@@ -131,6 +131,7 @@ def urlinput(url=None):
         input("Invalid URL. Press Enter to return to the main menu.")
 
 
+
 def searchinput(mode, searchterm=None):
     """Get user input for release or artist to search, then search it."""
     word = "artist"

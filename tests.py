@@ -69,4 +69,40 @@ class InputTests(unittest.TestCase):
     @mock.patch('scripts.userfunctions.input', create=True)
     def test_input_method(self, mocked_input):
         mocked_input.side_effect = ["./assets/cwant"]
-        raise NotImplementedError("")
+        raise NotImplementedError()
+
+    def test_cacheinput(self):
+        raise NotImplementedError()
+
+    def test_searchinput(self):
+        raise NotImplementedError()
+
+
+
+class MiscMethods(unittest.TestCase):
+    def test_update(self):
+        raise NotImplementedError()
+
+    def test_redownload(self):
+        raise NotImplementedError()
+
+    def test_searchprocess(self):
+        raise NotImplementedError()
+
+    def test_parseartist(self):
+        raise NotImplementedError()
+
+    def test_parseartistpage(self):
+        raise NotImplementedError()
+
+    def test_processrelease(self):
+        raise NotImplementedError()
+
+    def test_downloadlistofsongs(self):
+        raise NotImplementedError()
+
+    def test_downloadsong(self):
+        raise NotImplementedError()
+
+    def test_tagsong(self):
+        raise NotImplementedError()
