@@ -126,7 +126,7 @@ def urlinput(url=None):
         # Declare ytobj now to declare infoobject.art as the youtube thumbnail
         ytobj = YouTube(url)
         infoobject.art = ytobj.thumbnail_url
-        downloadsong(ytobj, infoobject)
+        return downloadsong(ytobj, infoobject)
     except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
         input("Invalid URL. Press Enter to return to the main menu.")
 
@@ -365,7 +365,7 @@ def downloadlistofsongs(infoobject):
 
         # Add song to successful songs if downloadsong returns true
         try:
-            if downloadsong(video, infoobject):
+            if os.path.exists(downloadsong(video, infoobject)):
                 infoobject.updatesuccess({songname: songlen})
 
         # Skip to next song if above block raises an error
@@ -402,7 +402,7 @@ def downloadsong(ytobj, infoobject):
 
     print('\r', end='')
 
-    return os.path.exists(audiopath)
+    return audiopath
 
 
 def tagsong(target, infoobject):
