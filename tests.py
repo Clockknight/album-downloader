@@ -37,6 +37,7 @@ class InputTests(unittest.TestCase):
 
 
 class MiscMethods(unittest.TestCase):
+    #TODO implement all the tests for this class
     def test_update(self):
         raise NotImplementedError()
 

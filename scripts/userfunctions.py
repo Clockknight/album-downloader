@@ -84,6 +84,7 @@ Change the settings of the script.
 # Functions that take input from user, or determine logic of usage of below functions
 def cacheinput():
     """Take multiple inputs from text file, ask user if given input is artist or release."""
+    # TODO refactor one of the functions called so that you can calrify which artist/song is desired all at once instead of going thru a download process over and over again
     cachedict = {}
     # parses each line as new input, prompts user to clarify if each line is an artist or a user
     filedir = input(
