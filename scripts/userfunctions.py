@@ -22,8 +22,6 @@ First pass, look for each word in the release name, song name in the title, arti
 Second pass, also look through the videos' descriptions when looking for words in title, release name, artist name
 """
 
-
-
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
@@ -84,7 +82,7 @@ Change the settings of the script.
 # Functions that take input from user, or determine logic of usage of below functions
 def cacheinput():
     """Take multiple inputs from text file, ask user if given input is artist or release."""
-    # TODO refactor one of the functions called so that you can calrify which artist/song is desired all at once instead of going thru a download process over and over again
+    # TODO refactor one of the functions called so that you can specify all artists/songs is desired all at once instead of going thru a download process over and over again
     cachedict = {}
     # parses each line as new input, prompts user to clarify if each line is an artist or a user
     filedir = input(
@@ -93,18 +91,23 @@ def cacheinput():
     # Use readlines to seperate out the links of albums
     items = open(filedir, 'r').read().splitlines()
     for item in items:
-        case = -1
-        while case not in range(2):
+        case = 3
+        while case not in range(-1, 2):
             case = int(input(
                 "\nItem: "
                 + item +
-                """
-Input 0 if this is an artist
-Input 1 if it is a release.
-"""))
+                """Input -1 to skip.
+Input 0 if this is an artist.
+Input 1 if it is a release."""))
 
+
+        if case == -1:
+            cachedict.pop(item)
+            continue
+
+        # Create dict based on items, and responses given by user
         cachedict[item] = case
-    # Create dict based on items, and responses given by user
+
 
     # for item in resultArray:
     # ask user if its artist or album
@@ -113,6 +116,9 @@ Input 1 if it is a release.
     # Wait until all cache strings are processed before downloading all at once
     for key in cachedict:
         searchinput(cachedict[key], key)
+        # search input, until clarified
+        # ??
+        # download list of songs
 
 
 def urlinput(url=None):
@@ -132,7 +138,6 @@ def urlinput(url=None):
         input("Invalid URL. Press Enter to return to the main menu.")
 
 
-
 def searchinput(mode, searchterm=None):
     """Get user input for release or artist to search, then search it."""
     word = "artist"
@@ -143,7 +148,8 @@ def searchinput(mode, searchterm=None):
     if searchterm is None:
         searchterm = input('\nPlease input the name of the ' + word + ' you want to search for.\n\t')
 
-    searchprocess(word, searchterm)  # call helper function
+    info = searchprocess(word, searchterm)  # call helper function
+    downloadlistofsongs(info)
 
 
 def update():
@@ -217,8 +223,19 @@ def searchprocess(word, search_term):
 
 
 def parseartist(query, infoobject):
-    """Parse artist, calling parseartistpage() for each page. Return formatted list of songs downloaded."""
+    """
+    Parse artist, calling parseartistpage() for each page.
+    Return: formatted list of songs downloaded.
+    """
     # TODO include method to get releases the artist is only credited in
+    # TODO refactor this:
+    # seperate the while-true loop and the for loop, so releases is one big list
+
+    # in the for loop:
+    # create an initial infoobject
+    # attempt to update by reading the json
+    # every time it processes, update the infoobject *object*
+    # return that info object after both loops
     index = 1
 
     while True:
@@ -229,15 +246,21 @@ def parseartist(query, infoobject):
             print(e)
             print("Please copy console output and send to the issues page.")
             break
-
         # if nothing is returned from above, break out (query for parseartistpage was an empty page)
         if not releases:
             break
+
+
+
         # Process every release found
         for release in releases:
             processrelease(release, infoobject)
         # go to next page of artist
         index += 1
+
+
+
+
 
 
 def parseartistpage(query):
@@ -256,9 +279,18 @@ def parseartistpage(query):
     return results
 
 
-def processrelease(query, current_information=Information()):
-    """Parse information for release and send to downloadlistofsongs. Return formatted dict of success songs."""
+def processrelease(query:str, current_information=Information()):
+    """
+    Keyword Arguments:
+    query -- url of a discogs release
+    current_information -- information about the release (default new Information)
+
+    Parse information for release.
+
+    Return:
+         Most current data on relevant scope."""
     # TODO Check if multiple versions from different artists exist, get one with most songs
+
     #  tryexcept for passed query
     try:
         page = requests.get(query, headers=headers)  # Use requests on the new URL
@@ -276,7 +308,8 @@ def processrelease(query, current_information=Information()):
     # TODO Fix other people being included into history when some releases have the current artist as a side artist
     # going to need to move this outside of the scope of this function so it doesnt guess
     current_information.setArtist(artistname)  # separate artist
-    current_information.album = name.text[len(artistname) + 3:]  # grab album by removing enough characters from above var
+    current_information.album = name.text[
+                                len(artistname) + 3:]  # grab album by removing enough characters from above var
 
     print('\n\tDownloading Album - ' + current_information.album)
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
@@ -296,11 +329,10 @@ def processrelease(query, current_information=Information()):
     os.makedirs(current_information.targetstorage, exist_ok=True)  # Make the folder
 
     current_information.songs = songlistin(soup)
-    current_information.history = readhistory(current_information)
-    writehistory(current_information)
-    current_information = downloadlistofsongs(current_information)
+    return readhistory(current_information)
+    # downloadlistofsongs()
+
     # Call to write history to UPDATE with the songs that have been downloaded.
-    writehistory(current_information)
 
 
 # Functions that download albums or songs, after parsing info
@@ -375,6 +407,9 @@ def downloadlistofsongs(infoobject):
             print("blahblah")
             print('\t\tFailed Download: issue downloading from YouTube - ' + songname)
             continue
+
+
+    writehistory(infoobject)
 
     return infoobject
 
