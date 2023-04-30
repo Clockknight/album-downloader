@@ -19,7 +19,7 @@ class InputTests(unittest.TestCase):
     @staticmethod
     def test_urlinput():
         h1 = mp3hash.mp3hash(".\\assets\\Testing\\urlinputtest.mp3")
-        path = urlinput("https://www.youtube.com/watch?v=FVjeWMr8aLo")
+        path = url_input("https://www.youtube.com/watch?v=FVjeWMr8aLo")
         h2 = mp3hash.mp3hash(path)
         assert h1 == h2
 
