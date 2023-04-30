@@ -105,28 +105,24 @@ Input 1 if it is a release."""))
         # Create dict based on items, and responses given by user
         cache_dict[item] = case
 
-    # for item in resultArray:
-    # ask user if its artist or album
-    # store information in related array
-
+    # TODO refactor this:
     # Wait until all cache strings are processed before downloading all at once
+    # do this by making the below true:
+    # regardless of if it's an artist or release, check it and get a good url before passing it to downloads
     for key in cache_dict:
         search_input(cache_dict[key], key)
-        # search input, until clarified
-        # ??
-        # download list of songs
 
 
 def url_input(url=None):
     """Download given YouTube URL as MP3."""
     info_object = Information()
-    info_object.urlsetup()
+    info_object.setup_url()
     os.makedirs(info_object.targetstorage, exist_ok=True)  # Make the folder
     if url is None:
         url = input('\nPlease input the url of the video you want to download.\n\t')
 
     try:
-        # Declare yt_obj now to declare info_object.art as the youtube thumbnail
+        # Declare yt_obj now to declare info_object.art as the YouTube thumbnail
         yt_obj = YouTube(url)
         info_object.art = yt_obj.thumbnail_url
         return download_song(yt_obj, info_object)
@@ -195,7 +191,7 @@ def search_process(word, search_term):
 
         # If looking for artist, it takes first perfect match and escapes
         if title == search_term and word == 'artist':  # compare input to card's title
-            info_object.setArtist(search_term)
+            info_object.set_artist(search_term)
             matches.append(result[-1])
             result.pop(-1)
 
@@ -203,7 +199,7 @@ def search_process(word, search_term):
 
     if i:
         result = matches[i - 1]
-        # goes here if useroption returns 0
+        # goes here if user_option returns 0
     if isinstance(result, list):
         i = get_user_option(result)
         if i:
@@ -220,17 +216,10 @@ def search_process(word, search_term):
 
 def parse_artist(query, info_object):
     """
-    Parse artist, calling parseartistpage() for each page.
+    Parse artist, calling parse_artist_page() for each page.
     Return: formatted list of songs downloaded.
     """
     # TODO include method to get releases the artist is only credited in
-    # TODO refactor this:
-    # seperate the while-true loop and the for loop, so releases is one big list
-    # in the for loop:
-    # create an initial info_object
-    # attempt to update by reading the json
-    # every time it processes, update the info_object *object*
-    # return that info object after both loops
     index = 1
     releases = []
     while True:
@@ -242,14 +231,15 @@ def parse_artist(query, info_object):
             print("Please copy console output and send to the issues page.")
             break
         index += 1
-        # if nothing is returned from above, break out (query for parseartistpage was an empty page)
+        # if nothing is returned from above, break out (query for parse_artist_page was an empty page)
         if not releases:
             break
 
-    # Process every release found
+    read_history(info_object)
     for release in releases:
-        process_release(release, info_object)
-    # go to next page of artist
+        info_object.update(process_release(release, info_object))
+
+    return info_object
 
 
 def parse_artist_page(query):
@@ -295,12 +285,12 @@ def process_release(query: str, current_information=Information()):
         return
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
-    artistname = name.find('a').text
+    artist_name = name.find('a').text
     # TODO Fix other people being included into history when some releases have the current artist as a side artist
     # going to need to move this outside of the scope of this function so it doesnt guess
-    current_information.setArtist(artistname)  # separate artist
+    current_information.set_artist(artist_name)  # separate artist
     current_information.album = name.text[
-                                len(artistname) + 3:]  # grab album by removing enough characters from above var
+                                len(artist_name) + 3:]  # grab album by removing enough characters from above var
 
     print('\n\tDownloading Album - ' + current_information.album)
     coverart = soup.find('div', {"class": "more_8jbxp"})  # finds url in the <a> tag of the cover preview
@@ -315,10 +305,9 @@ def process_release(query: str, current_information=Information()):
         current_information.art = 'fail'  # set it to fail for mp3 tag check
 
     # Preparing directory to download song
-    # create folder for artist, and subfolder for release
-    current_information.setStorage()
+    # create folder for artist, and subdirectory for release
+    current_information.set_storage()
     os.makedirs(current_information.targetstorage, exist_ok=True)  # Make the folder
-
     current_information.songs = song_list_in(soup)
     return read_history(current_information)
     # download_list_of_songs()
@@ -332,18 +321,18 @@ def download_list_of_songs(info_object):
     """Send pytube YouTube objects to download song.
     Return formatted dict of success songs, specifically for this release."""
     info_object.song_count = 0
-    info_object.totalcount = len(info_object.songs)
+    info_object.total_count = len(info_object.songs)
     # mega Codeblock to download array's songs
     # Use album name + song name + "song" in YouTube search
 
     for song_name in info_object.songs:
-        info_object.cursong = song_name
+        info_object.current_song = song_name
         print('\t\tDownloading - ' + song_name)
 
         res = Search(writable(info_object.album + ' ' + info_object.artist + ' song ' + song_name))
         res.results
         loop = len(res.results)
-        # loop to check at least 100 videos, get_next_results doesnt pull consistent amount of videos
+        # loop to check at least 100 videos, get_next_results does not pull consistent amount of videos
         while loop < 100:
             res.get_next_results()
             loop = len(res.results)
@@ -391,7 +380,7 @@ def download_list_of_songs(info_object):
         # Add song to successful songs if download_song returns true
         try:
             if os.path.exists(download_song(video, info_object)):
-                info_object.updatesuccess({song_name: songlen})
+                info_object.update_success({song_name: songlen})
 
         # Skip to next song if above block raises an error
         except pytube.exceptions.VideoUnavailable:
@@ -424,7 +413,7 @@ def download_song(yt_obj, info_object):
 
     os.remove(videopath)  # delete old mp4
 
-    if info_object.isalbum:
+    if info_object.is_album:
         tag_song(audio_file_path, info_object)
 
     print('\r', end='')
@@ -436,11 +425,11 @@ def tag_song(target, info_object):
     """Tag MP3 with given information. Also normalizes the audio of the file."""
     tag_target = eyed3.load(target)  # creates mp3audiofile at downloaded mp3
     tag_target = tag_target.tag
-    tag_target.title = info_object.cursong
+    tag_target.title = info_object.current_song
     tag_target.artist = info_object.artist
     tag_target.album = info_object.album
     tag_target.album_artist = info_object.artist
-    tag_target.track_num = (info_object.song_count, info_object.totalcount)
+    tag_target.track_num = (info_object.song_count, info_object.total_count)
     if info_object.art != 'fail':  # Check if coverart is actually valid
         coverart = info_object.art.url
 
@@ -470,7 +459,7 @@ def writable(rewrite):
 
 
 def song_list_in(release_soup):
-    """Parse info from release page, return dict of songs and songlengths."""
+    """Parse info from release page, return dict of songs and song lengths."""
     result = {}
     # find table with class, tbody inside
 
@@ -502,12 +491,12 @@ def check_history(info_object=Information()):
     """Assume:
         User wants history file at location. Location informed by Information object.
     Write history.json if it doesn't exist yet. Return the directory to the file opened."""
-    historydir = info_object.hist_storage
-    if historydir is None:
-        info_object.hist_storage, historydir = ".\\assets\\history.json"  # default history location
+    history_directory = info_object.hist_storage
+    if history_directory is None:
+        info_object.hist_storage, history_directory = ".\\assets\\history.json"  # default history location
 
-    if not os.path.exists(historydir):
-        with open(historydir, 'w') as f:
+    if not os.path.exists(history_directory):
+        with open(history_directory, 'w') as f:
             json.dump({}, f)
 
     return info_object
@@ -521,18 +510,18 @@ def write_history(info_object, overwrite_hist=None):
     If overwriteHist is specified, overwrite history.json with it"""
 
     # Case where no overwrite history is provided
-    hist_dir, newhist = info_object.historyvar()
+    history_directory, new_history = info_object.history_variables()
     total_hist = read_history(info_object)
-    curartist = info_object.artist
+    current_artist = info_object.artist
     # Check if the artist dict in history needs to be overwritten
-    if curartist in total_hist:
-        if len(total_hist[curartist]) == 1:
-            if info_object.album in total_hist[curartist]:
-                # if the last two tests passed that means this is the first release to be processed, and this is the second writehistory call on that release
-                total_hist[curartist][info_object.album] = {}
-        total_hist[curartist].update(newhist[curartist])
+    if current_artist in total_hist:
+        if len(total_hist[current_artist]) == 1:
+            if info_object.album in total_hist[current_artist]:
+                # if the last two tests passed that means this is the first release to be processed, and this is the second write_history call on that release
+                total_hist[current_artist][info_object.album] = {}
+        total_hist[current_artist].update(new_history[current_artist])
     else:
-        total_hist.update(newhist)
+        total_hist.update(new_history)
 
     if overwrite_hist is not None:
         total_hist = overwrite_hist
@@ -540,7 +529,7 @@ def write_history(info_object, overwrite_hist=None):
     result = json.dumps(total_hist, sort_keys=True, indent=4)
 
     # write result to the file
-    f = open(hist_dir, 'w')
+    f = open(history_directory, 'w')
     f.write(result)
     f.close()
 
@@ -636,7 +625,7 @@ def search_result_filter(info_object, video):
 
     # retrieve
     artist_filter, album_song_filter = info_object.filter_words()
-    failwords = []
+    fail_words = []
 
     try:
         video_name = video.title.split()
@@ -646,7 +635,7 @@ def search_result_filter(info_object, video):
     for i in range(len(video_name)):
         video_name[i] = video_name[i].lower()
 
-    for word in info_object.cursong.split():
+    for word in info_object.current_song.split():
         temp = False
         for vid_word in video_name:
             if not temp and word.lower() in vid_word:
@@ -661,13 +650,13 @@ def search_result_filter(info_object, video):
     for word in artist_filter:
         for vid_word in video_name:
             if not temp and word.lower() in vid_word:
-                failwords.append(word)
+                fail_words.append(word)
                 break
 
     # Only enter this loop if filter_words isn't empty
-    if failwords:
+    if fail_words:
         desc_words = video.description.split()
-        for word in failwords:
+        for word in fail_words:
             temp = False
             for dword in desc_words:
                 if word in dword:
