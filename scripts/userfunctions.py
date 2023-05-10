@@ -15,6 +15,7 @@ import os
 # TODO Fix the console only printing out part of the artist's name when downloading GG OST
 # TODO Include album #/# when printing "downloading album" message
 # TODO include "artist (###)" in perfect match results in search_input()
+# TODO add restriction to saving to history json, dont add the history if it's from a different artist than artist
 """
 First pass, look for each word in the release name, song name in the title, artist name in title and channel name
 Second pass, also look through the videos' descriptions when looking for words in title, release name, artist name
@@ -102,15 +103,25 @@ Input 1 if it is a release."""))
             cache_dict.pop(item)
             continue
 
+
         # Create dict based on items, and responses given by user
         cache_dict[item] = case
+
+
+        # TODO extract get_user_option here from search_input
+        get_user_option()
+
+    # below is current implementation:
+    # search input -> search process -> download list of songs
+    for key in cache_dict:
+        search_input(cache_dict[key], key)
+
 
     # TODO refactor this:
     # Wait until all cache strings are processed before downloading all at once
     # do this by making the below true:
     # regardless of if it's an artist or release, check it and get a good url before passing it to downloads
-    for key in cache_dict:
-        search_input(cache_dict[key], key)
+
 
 
 def url_input(url=None):
@@ -617,7 +628,7 @@ def get_user_option(tag_array):
 def search_result_filter(info_object, video):
     """Given information from the info_object, check if the video is within expectations of the song.
     """
-    # TODO make multiple passes through each video when looking through a song
+    # TODO make multiple passes through each video when looking through a song to increase filter accuracy
     '''
     Stages of filtering
     
