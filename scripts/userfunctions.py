@@ -114,10 +114,10 @@ Input 1 if it is a release."""))
     # below is current implementation:
     # search input -> search process -> download list of songs
     for key in cache_dict:
-        search_input(cache_dict[key], key)
+        search_process(cache_dict[key], key)
 
 
-    # TODO refactor this:
+    # TODO refactor into this:
     # Wait until all cache strings are processed before downloading all at once
     # do this by making the below true:
     # regardless of if it's an artist or release, check it and get a good url before passing it to downloads
@@ -149,10 +149,10 @@ def search_input(mode, search_term=None):
 
     # Get input for artist/album name when no term is passed
     if search_term is None:
-        search_term = input('\nPlease input the name of the ' + word + ' you want to search for.\n\t')
+        search_term = input('\nPlease input the name of the ' + word + ' you want to searcv'
+                                                                       'h for.\n\t')
 
-    info = search_process(word, search_term)  # call helper function
-    download_list_of_songs(info)
+    return search_process(word, search_term)  # call helper function
 
 
 def update():
@@ -180,7 +180,17 @@ def ignorant_download():
 
 
 def search_process(word, search_term):
-    """Parse relevant information and call to appropriate function."""
+    """
+    Keyword Arguments:
+
+    word -- 
+
+    search_term -- 
+
+    Parse relevant information and call to appropriate function.
+
+    Return:
+    """
     result = []
     matches = []
     search_term = search_term.lower()
@@ -219,10 +229,12 @@ def search_process(word, search_term):
         # print out the stuff and ask user for correct
 
     if word == 'release':
-        process_release("https://discogs.com" + result["href"])
+        info = process_release("https://discogs.com" + result["href"])
     else:
         # Only artist mode has multipage support (Not an issue yet?)
-        parse_artist("https://discogs.com" + result["href"] + "?page=", info_object)
+        info = parse_artist("https://discogs.com" + result["href"] + "?page=", info_object)
+
+    return download_list_of_songs(info)
 
 
 def parse_artist(query, info_object):
