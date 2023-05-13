@@ -14,7 +14,7 @@ import os
 
 # TODO Fix the console only printing out part of the artist's name when downloading GG OST
 # TODO Include album #/# when printing "downloading album" message
-# TODO include "artist (###)" in perfect match results in search_input()
+# TODO include "artist (###)" in perfect match results in search_process()
 # TODO add restriction to saving to history json, dont add the history if it's from a different artist than artist
 """
 First pass, look for each word in the release name, song name in the title, artist name in title and channel name
@@ -59,9 +59,9 @@ Change the settings of the script.
         case '1':
             cache_input()
         case '2':
-            search_input(0)
+            search_process()
         case '3':
-            search_input(1)
+            search_process(artist_search=False)
         case '4':
             update()
         case '5':
@@ -80,8 +80,11 @@ Change the settings of the script.
 
 # Functions that take input from user, or determine logic of usage of below functions
 def cache_input():
-    """Take multiple inputs from text file, ask user if given input is artist or release."""
-    # TODO refactor one of the functions called so that you can specify all artists/songs is desired all at once instead of going thru a download process over and over again
+    """
+    Take multiple inputs from text file, ask user if given input is artist or release.
+
+    Return:
+    """
     cache_dict = {}
     # parses each line as new input, prompts user to clarify if each line is an artist or a user
     filedir = input(
@@ -93,35 +96,31 @@ def cache_input():
         case = 3
         while case not in range(-1, 2):
             case = int(input(
-                "\nItem: "
-                + item +
-                """Input -1 to skip.
+                """Item: 
+    {} 
+
+Input -1 to skip.
 Input 0 if this is an artist.
-Input 1 if it is a release."""))
+Input 1 if it is a release.""".format(item)))
 
         if case == -1:
-            cache_dict.pop(item)
             continue
-
 
         # Create dict based on items, and responses given by user
         cache_dict[item] = case
 
-
-        # TODO extract get_user_option here from search_input
-        get_user_option()
+        # TODO extract get_user_option here from search_process
+        get_user_option(case, item)
 
     # below is current implementation:
-    # search input -> search process -> download list of songs
+    # search process -> download list of songs
     for key in cache_dict:
         search_process(cache_dict[key], key)
-
 
     # TODO refactor into this:
     # Wait until all cache strings are processed before downloading all at once
     # do this by making the below true:
     # regardless of if it's an artist or release, check it and get a good url before passing it to downloads
-
 
 
 def url_input(url=None):
@@ -140,19 +139,6 @@ def url_input(url=None):
     except pytube.exceptions.VideoUnavailable or pytube.exceptions.RegexMatchError:
         input("Invalid URL. Press Enter to return to the main menu.")
 
-
-def search_input(mode, search_term=None):
-    """Get user input for release or artist to search, then search it."""
-    word = "artist"
-    if mode == 1:
-        word = "release"
-
-    # Get input for artist/album name when no term is passed
-    if search_term is None:
-        search_term = input('\nPlease input the name of the ' + word + ' you want to searcv'
-                                                                       'h for.\n\t')
-
-    return search_process(word, search_term)  # call helper function
 
 
 def update():
@@ -179,7 +165,7 @@ def ignorant_download():
 # Functions to parse information
 
 
-def search_process(word, search_term):
+def search_process(artist_search=True, search_term=None):
     """
     Keyword Arguments:
 
@@ -191,48 +177,20 @@ def search_process(word, search_term):
 
     Return:
     """
-    result = []
-    matches = []
-    search_term = search_term.lower()
-    url_term = urllib.parse.quote_plus(search_term)  # Makes artist string OK for URLs
-    query = 'https://www.discogs.com/search/?q=' + url_term + '&type=' + word  # makes url to search for results
-    page = requests.get(query, headers=headers)
-    info_object = Information()
 
-    # Codeblock to try and find albums based on mode provided
-    soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
+    # print out the stuff and ask user for correct
+    word = 'artist' if artist_search else 'release'
 
-    # Creates a list from all the divs that make up the cards
-    elems = soup.find_all('li', {"role": "listitem"})
+    # Get input for artist/album name when no term is passed
+    if search_term is None:
+        search_term = input('\nPlease input the name of the ' + word + ' you want to search'
+                                                                       'h for.\n\t')
 
-    # Go through each div, each one has a release/artist with a link out
-    for e in elems:
-        result.append(e.find('div', {"class": "card-release-title"}).find('a'))
-        title = result[-1]['title'].lower()
-
-        # If looking for artist, it takes first perfect match and escapes
-        if title == search_term and word == 'artist':  # compare input to card's title
-            info_object.set_artist(search_term)
-            matches.append(result[-1])
-            result.pop(-1)
-
-    i = get_user_option(matches)
-
-    if i:
-        result = matches[i - 1]
-        # goes here if user_option returns 0
-    if isinstance(result, list):
-        i = get_user_option(result)
-        if i:
-            result = result[i - 1]
-
-        # print out the stuff and ask user for correct
-
-    if word == 'release':
-        info = process_release("https://discogs.com" + result["href"])
-    else:
+    if artist_search:
         # Only artist mode has multipage support (Not an issue yet?)
         info = parse_artist("https://discogs.com" + result["href"] + "?page=", info_object)
+    else:
+        info = process_release("https://discogs.com" + result["href"])
 
     return download_list_of_songs(info)
 
@@ -602,14 +560,44 @@ def parsetime(in_string):
     return result
 
 
-def get_user_option(tag_array):
+def get_user_option(word, search_term):
     """Print out all of an array's items, then ask user for an option."""
-    length = len(tag_array)
-    option = -1
+
+    # imported block
+    result = []
+    matches = []
+    search_term = search_term.lower()
+    url_term = urllib.parse.quote_plus(search_term)  # Makes artist string OK for URLs
+    query = 'https://www.discogs.com/search/?q=' + url_term + '&type=' + word  # makes url to search for results
+    page = requests.get(query, headers=headers)
+    info_object = Information()
+
+    # Codeblock to try and find albums based on mode provided
+    soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
+
+    # Creates a list from all the divs that make up the cards
+    elems = soup.find_all('li', {"role": "listitem"})
+
+    # Go through each div, each one has a release/artist with a link out
+    for e in elems:
+        result.append(e.find('div', {"class": "card-release-title"}).find('a'))
+        title = result[-1]['title'].lower()
+
+        # If looking for artist, it takes first perfect match and escapes
+        if title == search_term and word == 'artist':  # compare input to card's title
+            info_object.set_artist(search_term)
+            matches.append(result[-1])
+            result.pop(-1)
+
+    i = get_user_option(matches)
+
+    # TODO implement this into the rest of the function
+
+    length = len(matches)
     max_display = 20
     cnt = -1
     display = ""
-
+    option = -1
     # Return 0 or 1 if the array is empty or has 1 object respectively
     if not length or length == 1:
         return length
@@ -624,11 +612,20 @@ def get_user_option(tag_array):
         len_range = range(max_display * cnt + 1, min(length, max_display * (cnt + 1) + 1))
 
         for i in len_range:
-            display += str(i) + ": " + tag_array[i - 1]['title'] + "\n"
+            display += str(i) + ": " + matches[i - 1]['title'] + "\n"
 
         if length > max_display:
             display += "Input a number outside of the current displayed to show the next {} results.".format(
                 max_display)
+
+        # imported block
+        if i:
+            result = matches[i - 1]
+            # goes here if user_option returns 0
+        if isinstance(result, list):
+            i = get_user_option(result)
+            if i:
+                result = result[i - 1]
 
         option = input(display)
         if option in len_range:

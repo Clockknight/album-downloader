@@ -13,7 +13,8 @@ class UnitTestingEnvironment(unittest.TestCase):
     def test_hashing_method(self):
         h1 = mp3hash.mp3hash(".\\assets\\Testing\\urlinputtest.mp3")
         h2 = mp3hash.mp3hash(".\\assets\\Testing\\hashingtest.mp3")
-        assert h1 != h2
+        h3 = mp3hash.mp3hash(".\\assets\\Testing\\urldouble.mp3")
+        assert h1 != h2 and h1 == h3
 
 class InputTests(unittest.TestCase):
     @staticmethod
@@ -36,7 +37,7 @@ class InputTests(unittest.TestCase):
 
 
 
-class MiscMethods(unittest.TestCase):
+class MethodTests(unittest.TestCase):
     #TODO implement all the tests for this class
     def test_update(self):
         raise NotImplementedError()
