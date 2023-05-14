@@ -1,5 +1,4 @@
 import os
-import scripts.userfunctions
 
 
 class Information:
