@@ -173,11 +173,9 @@ def search_process(query, artist_search=True, info_object=None):
 
     query -- url to be searched
 
-    artist_search --
+    artist_search -- boolean describing if this is an artist search (default to True)
 
-    search_term -- 
-
-    info_object --
+    info_object -- Information object with any previous history (default to None)
 
     Assume url to be scraped has already been selected, and pass on information to the correct function.
 
