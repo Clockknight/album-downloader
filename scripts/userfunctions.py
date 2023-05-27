@@ -79,11 +79,13 @@ Change the settings of the script.
 
 
 # Functions that take input from user, or determine logic of usage of below functions
-def cache_input():
+def cache_input(filedir=None):
     """
-    Take multiple inputs from text file, ask user if given input is artist or release.
+    Keyword Arguments:
 
-    Return:
+    filedir -- directory of cache text file (default None)
+
+    Take multiple inputs from text file, ask user if given input is artist or release.
     """
     cache_dict = {}
     # parses each line as new input, prompts user to clarify if each line is an artist or a user
