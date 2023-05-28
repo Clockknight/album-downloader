@@ -124,15 +124,12 @@ Input 1 if it is a release.""".format(item)))
         new_information = search_process(query=query_key, artist_search=cache_dict[query_key])
         append_history(new_information)
 
-        #TODO make search_process return an info object
-
-
 
 def url_input(url=None):
     """Download given YouTube URL as MP3."""
     info_object = Information()
     info_object.setup_url()
-    os.makedirs(info_object.targetstorage, exist_ok=True)  # Make the folder
+    os.makedirs(info_object.target_storage, exist_ok=True)  # Make the folder
     if url is None:
         url = input('\nPlease input the url of the video you want to download.\n\t')
 
@@ -181,7 +178,7 @@ def search_process(query, artist_search=True, info_object=None):
 
     Assume url to be scraped has already been selected, and pass on information to the correct function.
 
-    Return:
+    Return: Information object, storing a record of the songs downloaded.
     """
 
     # Get input for artist/album name when no term is passed
@@ -194,12 +191,21 @@ def search_process(query, artist_search=True, info_object=None):
     else:
         info = process_release("https://discogs.com" + query)
 
+    # TODO make search_process return an info object
+    # In order to do this, make downloadlistofsongs return an info object
     return download_list_of_songs(info)
 
 
 def parse_artist(query, info_object):
     """
+    Keyword Arguments:
+
+    query -- url to be searched
+
+    info_object -- Information object with any previous history (default to None)
+
     Parse artist, calling parse_artist_page() for each page.
+
     Return: formatted list of songs downloaded.
     """
     # TODO include method to get releases the artist is only credited in
@@ -208,7 +214,10 @@ def parse_artist(query, info_object):
     while True:
         # store array of releases to download
         try:
-            releases.append(parse_artist_page(query + str(index)))
+            result = parse_artist_page(query + str(index))
+            if result is None:
+                break
+            releases += result
         except AttributeError as e:
             print(e)
             print("Please copy console output and send to the issues page.")
@@ -220,7 +229,8 @@ def parse_artist(query, info_object):
 
     read_history(info_object)
     for release in releases:
-        info_object.update(process_release(release, info_object))
+        processed_info = process_release(release, info_object)
+        info_object.update(processed_info)
 
     return info_object
 
@@ -232,7 +242,10 @@ def parse_artist_page(query):
     soup = BeautifulSoup(soup.text, "html.parser")
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
-    trs = soup.find("table", id="artist").find_all("tr")
+    table = soup.find("table", id="artist")
+    if table is None:
+        return None
+    trs = table.find_all("tr")
     for tr in trs:
         # Every tr with an album has this attribute
         if tr.has_attr("data-object-type"):
@@ -249,7 +262,7 @@ def process_release(query: str, current_information=Information()):
 
     current_information -- information about the release (default new Information)
 
-    Parse information for release.
+    Parse information for release. Adjust incoming Information properties to match query
 
     Return: Most current data of release.
     """
@@ -265,7 +278,7 @@ def process_release(query: str, current_information=Information()):
         print(e)
         print('Error: failure processing album. Link provided - ' + query)
         print("Connection Error. Copy Console Output and talk about it in the issues page.")
-        return
+        return current_information
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artist_name = name.find('a').text
@@ -284,15 +297,20 @@ def process_release(query: str, current_information=Information()):
             raise ConnectionError(current_information.art.status_code)
     except ConnectionError as e:
         # Let the user know the album art isn't available
+        # TODO this pings every release - figure out why
         print('\t\tMissed Tag: Problem getting album art - {} - {}'.format(e.args[0], current_information.album))
         current_information.art = 'fail'  # set it to fail for mp3 tag check
 
     # Preparing directory to download song
     # create folder for artist, and subdirectory for release
     current_information.set_storage()
-    os.makedirs(current_information.targetstorage, exist_ok=True)  # Make the folder
+    os.makedirs(current_information.target_storage, exist_ok=True)  # Make the folder
     current_information.songs = song_list_in(soup)
-    return read_history(current_information)
+    # TODO calling read history every time i process a release is probably killing run time, fix it. Make a single call somewhere.
+    # in the single call make a big dict that stores Informations as they get returned and then store them bsaed on artist name
+    old_information = Information()
+    old_information.success = read_history(current_information)
+    return old_information
     # download_list_of_songs()
 
     # Call to write history to UPDATE with the songs that have been downloaded.
@@ -301,8 +319,16 @@ def process_release(query: str, current_information=Information()):
 # Functions that download albums or songs, after parsing info
 
 def download_list_of_songs(info_object):
-    """Send pytube YouTube objects to download song.
-    Return formatted dict of success songs, specifically for this release."""
+    """
+    Keyword Arguments:
+
+    info_object -- Information object with prior history of release (default to None)
+
+    Send pytube YouTube objects to download song.
+
+    Return: Return Information with success and failed songs
+    """
+
     info_object.song_count = 0
     info_object.total_count = len(info_object.songs)
     # mega Codeblock to download array's songs
@@ -321,8 +347,8 @@ def download_list_of_songs(info_object):
             loop = len(res.results)
         res = res.results
 
-        songlen = info_object.songs[song_name]
-        if songlen == 0:
+        song_length = info_object.songs[song_name]
+        if song_length == 0:
             print('\r\t\tNo song length found. Result may be inaccurate.')
 
         # Nested if checks to see if artist, album, and song are all used
@@ -341,11 +367,13 @@ def download_list_of_songs(info_object):
             print('\r\t\tAttempting video ' + str(videos - loop + 1) + '/' + str(videos), end='\r', flush=True)
             loop -= 1
             # Range is 85% to 110% of the song length
-            vid_length = video.length
-
-            # Filter for video codeblock
-            if vid_length not in range(int(songlen * .85), int(songlen * 1.25)) and songlen != 0:
-                continue  # Try again with next video if it's out of range
+            try:
+                vid_length = video.length
+                # Filter for video codeblock
+                if vid_length not in range(int(song_length * .85), int(song_length * 1.25)) and song_length != 0:
+                    continue  # Try again with next video if it's out of range
+            except TypeError:
+                print("Video length error. Usually caused when looking at an archived stream.")
 
             if search_result_filter(info_object, video):
                 break
@@ -363,7 +391,7 @@ def download_list_of_songs(info_object):
         # Add song to successful songs if download_song returns true
         try:
             if os.path.exists(download_song(video, info_object)):
-                info_object.update_success({song_name: songlen})
+                info_object.update_success({song_name: song_length})
 
         # Skip to next song if above block raises an error
         except pytube.exceptions.VideoUnavailable:
@@ -386,7 +414,7 @@ def download_song(yt_obj, info_object):
         return False
     video = video.order_by("abr").desc().first()
 
-    videopath = os.path.abspath(os.path.join(info_object.targetstorage, writable(video.title))) + '.mp4'
+    videopath = os.path.abspath(os.path.join(info_object.target_storage, writable(video.title))) + '.mp4'
     video.download(filename=videopath)
 
     clip = AudioFileClip(videopath)  # make var to point to mp4's audio
@@ -416,7 +444,7 @@ def tag_song(target, info_object):
     if info_object.art != 'fail':  # Check if coverart is actually valid
         coverart = info_object.art.url
 
-        filename = os.path.join(info_object.targetstorage, writable(info_object.album) + ".jpg")
+        filename = os.path.join(info_object.target_storage, writable(info_object.album) + ".jpg")
         r = requests.get(coverart, stream=True)
         r.raw.decode_content = True
 
@@ -474,9 +502,9 @@ def check_history(info_object=Information()):
     """Assume:
         User wants history file at location. Location informed by Information object.
     Write history.json if it doesn't exist yet. Return the directory to the file opened."""
-    history_directory = info_object.hist_storage
+    history_directory = info_object.history_storage
     if history_directory is None:
-        info_object.hist_storage, history_directory = ".\\assets\\history.json"  # default history location
+        info_object.history_storage, history_directory = ".\\assets\\history.json"  # default history location
 
     if not os.path.exists(history_directory):
         with open(history_directory, 'w') as f:
@@ -520,7 +548,7 @@ def append_history(info_object, overwrite_hist=None):
 def read_history(info_object=Information()):
     """Return artist's results from history.json as a dict.
     If no artist is specified, return all results."""
-    hist_dir = info_object.hist_storage
+    hist_dir = info_object.history_storage
     if not os.path.exists(hist_dir):
         open(hist_dir, 'w+')
     f = open(hist_dir, 'r')
@@ -581,7 +609,7 @@ def get_user_option(artist_search, search_term):
     search_term = search_term.lower()
     # Makes artist string OK for URLs
     url_term = urllib.parse.quote_plus(search_term)
-    query = 'https://www.discogs.com/search/?q=' + url_term + '&type=' + 'artist' if artist_search else 'release'
+    query = 'https://www.discogs.com/search/?q=' + url_term + '&type=' + ('artist' if artist_search else 'release')
     page = requests.get(query, headers=headers)
     info_object = Information()
 
@@ -608,7 +636,6 @@ def get_user_option(artist_search, search_term):
         return None
     elif length == 1:
         return matches[0]["href"]
-
 
     while True:
 

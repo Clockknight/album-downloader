@@ -1,4 +1,5 @@
 import os
+from scripts import userfunctions
 
 
 class Information:
@@ -34,8 +35,15 @@ class Information:
 
     def update(self, infoobj):
         """Update values of the success dict variable with new """
-        self.success.update(infoobj.success)
-        self.artist = infoobj.artist
+        if self.artist is infoobj.artist:
+            self.success.update(infoobj.success)
+            return
+        elif infoobj.artist is None:
+            infoobj.artist = self.artist
+            return
+        raise Exception("Can't update with different artists")
+
+
 
     def history_variables(self):
         """Return various variables used when writing to history.json"""
