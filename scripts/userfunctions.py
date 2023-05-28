@@ -88,16 +88,19 @@ def cache_input(filedir=None):
     Take multiple inputs from text file, ask user if given input is artist or release.
     """
     cache_dict = {}
-    # parses each line as new input, prompts user to clarify if each line is an artist or a user
-    filedir = input(
-        'Please enter the directory of the text file that has the links to appropriate files separated by newlines.\n')
 
+    if filedir is None:
+        filedir = input(
+            'Please enter the directory of the text file that has the links to appropriate files separated by '
+            'newlines.\n')
+
+    # parses each line as new input, prompts user to clarify if each line is an artist or a user
     # Use read_lines to separate out the links of albums
     items = open(filedir, 'r').read().splitlines()
     for item in items:
-        case = 3
-        while case not in range(-1, 2):
-            case = int(input(
+        artist_search = 3
+        while artist_search not in range(-1, 2):
+            artist_search = int(input(
                 """Item: 
     {} 
 
@@ -105,27 +108,24 @@ Input -1 to skip.
 Input 0 if this is an artist.
 Input 1 if it is a release.""".format(item)))
 
-        if case == -1:
+        if artist_search == -1:
             continue
+        else:
+            artist_search = artist_search == 0
 
-        artist_search = case == 0
-
-        # Create dict based on items, and responses given by user
-        cache_dict[item] = artist_search
-
-        # TODO extract get_user_option here from search_process
-        get_user_option(case, item)
+        returned_url = get_user_option(artist_search, item)
+        if returned_url is None:
+            continue
+        cache_dict[returned_url] = artist_search
 
     # below is current implementation:
     # search process -> download list of songs
-    for key in cache_dict:
-        search_process(cache_dict[key], key)
+    for query_key in cache_dict:
+        new_information = search_process(query=query_key, artist_search=cache_dict[query_key])
+        append_history(new_information)
 
-    # TODO refactor into this:
-    # Wait until all cache strings are processed before downloading all at once
-    # do this by making the below true:
-    # regardless of if it's an artist or release, check it and get a good url before passing it to downloads
-    # search process should be able to run with the guarantee that it's provided with all the info it needs
+        #TODO make search_process return an info object
+
 
 
 def url_input(url=None):
@@ -146,7 +146,7 @@ def url_input(url=None):
 
 
 def update():
-    """Check releases and artists for yet to be downloaded songs. Call write_history."""
+    """Check releases and artists for yet to be downloaded songs. Call append_history."""
     info_object = Information()
 
     history = read_history(info_object)
@@ -161,7 +161,7 @@ def ignorant_download():
     # write each artist's history as {}
     for artist in history:
         history[artist] = {}
-    write_history(Information(), history)
+    append_history(Information(), history)
     # then update
     update()
 
@@ -371,7 +371,7 @@ def download_list_of_songs(info_object):
             print('\t\tFailed Download: issue downloading from YouTube - ' + song_name)
             continue
 
-    write_history(info_object)
+    append_history(info_object)
 
     return info_object
 
@@ -485,7 +485,7 @@ def check_history(info_object=Information()):
     return info_object
 
 
-def write_history(info_object, overwrite_hist=None):
+def append_history(info_object, overwrite_hist=None):
     """Assume:
         info_object is an Information object with information on new songs that have been downloaded.
         History.json file exists
@@ -497,16 +497,16 @@ def write_history(info_object, overwrite_hist=None):
     total_hist = read_history(info_object)
     current_artist = info_object.artist
     # Check if the artist dict in history needs to be overwritten
-    if current_artist in total_hist:
-        if len(total_hist[current_artist]) == 1:
-            if info_object.album in total_hist[current_artist]:
-                # if the last two tests passed that means this is the first release to be processed, and this is the second write_history call on that release
-                total_hist[current_artist][info_object.album] = {}
-        total_hist[current_artist].update(new_history[current_artist])
+    if overwrite_hist is None:
+        if current_artist in total_hist:
+            if len(total_hist[current_artist]) == 1:
+                if info_object.album in total_hist[current_artist]:
+                    # if the last two tests passed that means this is the first release to be processed, and this is the second append_history call on that release
+                    total_hist[current_artist][info_object.album] = {}
+            total_hist[current_artist].update(new_history[current_artist])
+        else:
+            total_hist.update(new_history)
     else:
-        total_hist.update(new_history)
-
-    if overwrite_hist is not None:
         total_hist = overwrite_hist
 
     result = json.dumps(total_hist, sort_keys=True, indent=4)
@@ -572,7 +572,7 @@ def get_user_option(artist_search, search_term):
 
     Print out all of an array's items, then ask user for an option. Seperate large lists of options into pages.
 
-    Return: url of user-selected page
+    Return: url of user-selected page. If user exits, returns None.
     """
 
     # imported block
@@ -604,8 +604,11 @@ def get_user_option(artist_search, search_term):
     page_count = -1
     display = ""
     # Return 0 or 1 if the array is empty or has 1 object respectively
-    if not length or length == 1:
-        return length
+    if not length:
+        return None
+    elif length == 1:
+        return matches[0]["href"]
+
 
     while True:
 
