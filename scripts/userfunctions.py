@@ -113,14 +113,19 @@ Input 1 if it is a release.""".format(item)))
         else:
             artist_search = artist_search == 0
 
+
+
         returned_url = get_user_option(artist_search, item)
         if returned_url is None:
             continue
         cache_dict[returned_url] = artist_search
 
+        print(cache_dict)
+
     # below is current implementation:
     # search process -> download list of songs
     for query_key in cache_dict:
+        print(query_key)
         new_information = search_process(query=query_key, artist_search=cache_dict[query_key])
         append_history(new_information)
 
@@ -145,7 +150,6 @@ def url_input(url=None):
 def update():
     """Check releases and artists for yet to be downloaded songs. Call append_history."""
     info_object = Information()
-
     history = read_history(info_object)
     for artist in history:
         search_process("artist", artist)
@@ -603,15 +607,18 @@ def get_user_option(artist_search, search_term):
     Return: url of user-selected page. If user exits, returns None.
     """
 
+    # todo get_user_option returns none when using albums
     # imported block
     result = []
     matches = []
     search_term = search_term.lower()
+    info_object = Information()
+    if artist_search:
+        info_object.set_artist(search_term)
     # Makes artist string OK for URLs
     url_term = urllib.parse.quote_plus(search_term)
     query = 'https://www.discogs.com/search/?q=' + url_term + '&type=' + ('artist' if artist_search else 'release')
     page = requests.get(query, headers=headers)
-    info_object = Information()
 
     # Codeblock for scraping discogs
     soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
@@ -622,8 +629,8 @@ def get_user_option(artist_search, search_term):
         result.append(e.find('div', {"class": "card-release-title"}).find('a'))
         title = result[-1]['title'].lower()
         # If looking for artist, it takes first perfect match and escapes
-        if title == search_term and artist_search:  # compare input to card's title
-            info_object.set_artist(search_term)
+        if title == search_term:  # compare input to card's title
+            # TODO if this is in release search, find a way to scrape, then display artist name
             matches.append(result[-1])
             result.pop(-1)
 
