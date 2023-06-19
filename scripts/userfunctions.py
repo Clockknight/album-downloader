@@ -80,6 +80,7 @@ Change the settings of the script.
 
 # Functions that take input from user, or determine logic of usage of below functions
 def cache_input(filedir=None):
+    # TODO enable test inputs on this function
     """
     Keyword Arguments:
 
@@ -112,8 +113,6 @@ Input 1 if it is a release.""".format(item)))
             continue
         else:
             artist_search = artist_search == 0
-
-
 
         returned_url = get_user_option(artist_search, item)
         if returned_url is None:
@@ -609,7 +608,7 @@ def get_user_option(artist_search, search_term):
 
     # todo get_user_option returns none when using albums
     # imported block
-    result = []
+    titles = []
     matches = []
     search_term = search_term.lower()
     info_object = Information()
@@ -626,13 +625,15 @@ def get_user_option(artist_search, search_term):
     elems = soup.find_all('li', {"role": "listitem"})
     # Go through each div, each one has a release/artist with a link out
     for e in elems:
-        result.append(e.find('div', {"class": "card-release-title"}).find('a'))
-        title = result[-1]['title'].lower()
+        result = e.find('div', {"class": "card-release-title"}).find('a')
+        title = result['title'].lower()
         # If looking for artist, it takes first perfect match and escapes
         if title == search_term:  # compare input to card's title
-            # TODO if this is in release search, find a way to scrape, then display artist name
-            matches.append(result[-1])
-            result.pop(-1)
+            if not artist_search:
+                artist = e.find('div', {"class": "card-artist-name"}).find('a')['title'].lower()
+                title += " - {}".format(artist)
+            titles.append(title)
+            matches.append(result)
 
     length = len(matches)
     displayed_per_page = 20
@@ -651,17 +652,17 @@ def get_user_option(artist_search, search_term):
 
         page_count += 1
 
-        current_page = range(displayed_per_page * page_count + 1,
+        current_page = range(displayed_per_page * page_count ,
                              min(length, displayed_per_page * (page_count + 1) + 1))
 
         for i in current_page:
-            display += str(i) + ": " + matches[i - 1]['title'] + "\n"
+            display += str(i+1) + ": " + titles[i - 1] + "\n"
 
         if length > displayed_per_page:
             display += "Input a number outside of the current displayed to show the next {} results.".format(
                 displayed_per_page)
 
-        option = input(display)
+        option = int(input(display))
         if option in current_page:
             return matches[option - 1]["href"]
         # else:
