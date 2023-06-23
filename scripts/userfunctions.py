@@ -124,7 +124,6 @@ Input 1 if it is a release.""".format(item)))
     # below is current implementation:
     # search process -> download list of songs
     for query_key in cache_dict:
-        print(query_key)
         new_information = search_process(query=query_key, artist_search=cache_dict[query_key])
         append_history(new_information)
 
@@ -183,6 +182,7 @@ def search_process(query, artist_search=True, info_object=None):
 
     Return: Information object, storing a record of the songs downloaded.
     """
+
 
     # Get input for artist/album name when no term is passed
     if info_object is None:

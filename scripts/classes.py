@@ -35,11 +35,14 @@ class Information:
 
     def update(self, infoobj):
         """Update values of the success dict variable with new """
+
         if self.artist is infoobj.artist:
+            print(infoobj.success)
             self.success.update(infoobj.success)
             return
         elif infoobj.artist is None:
             infoobj.artist = self.artist
+
             return
         raise Exception("Can't update with different artists")
 
