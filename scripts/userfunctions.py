@@ -285,8 +285,11 @@ def process_release(query: str, current_information=Information()):
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artist_name = name.find('a').text
-    # TODO Fix other people being included into history when some releases have the current artist as a side artist
+    artist_search= True
+    # ToDO Fix other people being included into history when some releases have the current artist as a side artist
     # going to need to move this outside of the scope of this function so it doesnt guess
+    if current_information.artist is None:
+        artist_search = False
     current_information.set_artist(artist_name)  # separate artist
     current_information.album = name.text[
                                 len(artist_name) + 3:]  # grab album by removing enough characters from above var
@@ -311,9 +314,14 @@ def process_release(query: str, current_information=Information()):
     current_information.songs = song_list_in(soup)
     # TODO calling read history every time i process a release is probably killing run time, fix it. Make a single call somewhere.
     # in the single call make a big dict that stores Informations as they get returned and then store them bsaed on artist name
-    old_information = Information()
-    old_information.success = read_history(current_information)
-    return old_information
+
+    if artist_search:
+        old_information = Information()
+        old_information.success = read_history(current_information)
+        return old_information
+
+    # TODO changed this to return current information - might be causing ALL downloads to fail
+    return current_information
     # download_list_of_songs()
 
     # Call to write history to UPDATE with the songs that have been downloaded.
