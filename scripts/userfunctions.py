@@ -168,11 +168,11 @@ def ignorant_download():
 # Functions to parse information
 
 
-def search_process(query, artist_search=True, info_object=None):
+def search_process(query=None, artist_search=True, info_object=None):
     """
     Keyword Arguments:
 
-    query -- url to be searched
+    query -- artist/release to be searched
 
     artist_search -- boolean describing if this is an artist search (default to True)
 
@@ -187,6 +187,9 @@ def search_process(query, artist_search=True, info_object=None):
     # Get input for artist/album name when no term is passed
     if info_object is None:
         info_object = Information()
+
+    if query is None:
+        query = input("Please input the name of the {} you're searching for.".format("artist" if artist_search else "release"))
 
     if artist_search:
         # Only artist mode has multipage support (Not an issue yet?)
