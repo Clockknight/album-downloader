@@ -189,11 +189,11 @@ def search_process(query=None, artist_search=True, info_object=None):
         info_object = Information()
 
     if query is None:
-        query = input("Please input the name of the {} you're searching for.".format("artist" if artist_search else "release"))
+        query = input("Please input the name of the {} you're searching for:\n".format("artist" if artist_search else "release"))
 
     if artist_search:
         # Only artist mode has multipage support (Not an issue yet?)
-        info = parse_artist("https://discogs.com" + query + "?page=", info_object)
+        info = parse_artist("https://discogs.com/search/?q=" + query + "&type=artist&page=", info_object)
     else:
         info = process_release("https://discogs.com" + query)
 
