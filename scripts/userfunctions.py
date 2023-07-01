@@ -13,9 +13,9 @@ import re
 import os
 
 # TODO Fix the console only printing out part of the artist's name when downloading GG OST
+# TODO replace more text in console when going through release
 # TODO Include album #/# when printing "downloading album" message
 # TODO include "artist (###)" in perfect match results in search_process()
-# TODO add restriction to saving to history json, dont add the history if it's from a different artist than artist
 """
 First pass, look for each word in the release name, song name in the title, artist name in title and channel name
 Second pass, also look through the videos' descriptions when looking for words in title, release name, artist name
@@ -539,6 +539,7 @@ def append_history(info_object, overwrite_hist=None):
     total_hist = read_history(info_object)
     current_artist = info_object.artist
     # Check if the artist dict in history needs to be overwritten
+    # TODO fix program crashing here since it's comparing none to string
     if overwrite_hist is None:
         if current_artist in total_hist:
             if len(total_hist[current_artist]) == 1:

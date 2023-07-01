@@ -50,7 +50,7 @@ class Information:
 
     def history_variables(self):
         """Return various variables used when writing to history.json"""
-        return self.history_storage, {self.artist: {self.album: self.success}}
+        return self.history_storage, {} if self.artist is None else {self.artist: {self.album: self.success}}
 
     def filter_words(self):
         """Return words that are used when filtering out video results"""
