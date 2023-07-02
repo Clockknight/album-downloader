@@ -1,3 +1,4 @@
+from requests_html import HTMLSession
 from json import JSONDecodeError
 import eyed3
 import urllib
@@ -190,10 +191,12 @@ def search_process(query=None, artist_search=True, info_object=None):
 
     if query is None:
         query = input("Please input the name of the {} you're searching for:\n".format("artist" if artist_search else "release"))
+    query = writable(query)
 
     if artist_search:
         # Only artist mode has multipage support (Not an issue yet?)
-        info = parse_artist("https://discogs.com/search/?q=" + query + "&type=artist&page=", info_object)
+        # TODO fix this, its not returning enough songs to actually give DLS anything
+        info = parse_artist("https://discogs.com/search/?q=" + query + "&type=artist", info_object)
     else:
         info = process_release("https://discogs.com" + query)
 
@@ -217,10 +220,12 @@ def parse_artist(query, info_object):
     # TODO include method to get releases the artist is only credited in
     index = 1
     releases = []
+    query += "&page="
     while True:
         # store array of releases to download
         try:
-            result = parse_artist_page(query + str(index))
+            test = query + str(index)
+            result = parse_artist_page(test)
             if result is None:
                 break
             releases += result
@@ -244,12 +249,15 @@ def parse_artist(query, info_object):
 def parse_artist_page(query):
     """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
-    soup = requests.get(query, headers=headers)
-    soup = BeautifulSoup(soup.text, "html.parser")
+
+    this_session = HTMLSession()
+    response = this_session.get(query)
+    response.html.render()
+    #soup = BeautifulSoup(response.html.raw_html, "html.parser")
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
-    table = soup.find("table", id="artist")
-    if table is None:
+    table = response.html.find("table#artist")
+    if table is None or table == []:
         return None
     trs = table.find_all("tr")
     for tr in trs:
