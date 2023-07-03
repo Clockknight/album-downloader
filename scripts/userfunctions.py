@@ -195,7 +195,6 @@ def search_process(query=None, artist_search=True, info_object=None):
 
     if artist_search:
         # Only artist mode has multipage support (Not an issue yet?)
-        # TODO fix this, its not returning enough songs to actually give DLS anything
         info = parse_artist("https://discogs.com/search/?q=" + query + "&type=artist", info_object)
     else:
         info = process_release("https://discogs.com" + query)
