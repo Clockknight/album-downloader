@@ -223,8 +223,8 @@ def parse_artist(query, info_object):
     while True:
         # store array of releases to download
         try:
-            test = query + str(index)
-            result = parse_artist_page(test)
+            query=  urlCleanup(query + str(index))
+            result = parse_artist_page(query)
             if result is None:
                 break
             releases += result
@@ -251,6 +251,7 @@ def parse_artist_page(query):
 
     this_session = HTMLSession()
     response = this_session.get(query)
+    print(query)
     response.html.render()
     #soup = BeautifulSoup(response.html.raw_html, "html.parser")
 
@@ -753,3 +754,8 @@ def search_result_filter(info_object, video):
 def clear_history():
     f = open("assets/history.json", 'w')
     f.write("")
+
+def urlCleanup(url):
+    url = re.sub(r' ', "%20", url)
+    return url.strip()
+
