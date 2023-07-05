@@ -249,14 +249,13 @@ def parse_artist_page(query):
     """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
 
-    this_session = HTMLSession()
-    response = this_session.get(query)
-    print(query)
-    response.html.render()
-    #soup = BeautifulSoup(response.html.raw_html, "html.parser")
+    session = HTMLSession()
+    response = session.get(query)
+
+    response.html.render(sleep=2, timeout=5)
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
-    table = response.html.find("table#artist")
+    table = response.html.find(".artist")
     if table is None or table == []:
         return None
     trs = table.find_all("tr")
