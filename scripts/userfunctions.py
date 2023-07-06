@@ -184,13 +184,13 @@ def search_process(query=None, artist_search=True, info_object=None):
     Return: Information object, storing a record of the songs downloaded.
     """
 
-
     # Get input for artist/album name when no term is passed
     if info_object is None:
         info_object = Information()
 
     if query is None:
-        query = input("Please input the name of the {} you're searching for:\n".format("artist" if artist_search else "release"))
+        query = input(
+            "Please input the name of the {} you're searching for:\n".format("artist" if artist_search else "release"))
     query = writable(query)
 
     if artist_search:
@@ -223,8 +223,7 @@ def parse_artist(query, info_object):
     while True:
         # store array of releases to download
         try:
-            query=  urlCleanup(query + str(index))
-            result = parse_artist_page(query)
+            result = parse_artist_page(query, index)
             if result is None:
                 break
             releases += result
@@ -245,17 +244,19 @@ def parse_artist(query, info_object):
     return info_object
 
 
-def parse_artist_page(query):
+def parse_artist_page(query, index):
     """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
 
+    urlQuery = urlCleanup(query + str(index))
+
     session = HTMLSession()
-    response = session.get(query)
+    response = session.get(urlQuery)
 
     response.html.render(sleep=2, timeout=5)
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
-    table = response.html.find(".artist")
+    table = response.html.find(".card-release-title")
     if table is None or table == []:
         return None
     trs = table.find_all("tr")
@@ -295,7 +296,7 @@ def process_release(query: str, current_information=Information()):
 
     name = soup.find('h1', {"class", "title_1q3xW"})  # grabs artist and album
     artist_name = name.find('a').text
-    artist_search= True
+    artist_search = True
     # ToDO Fix other people being included into history when some releases have the current artist as a side artist
     # going to need to move this outside of the scope of this function so it doesnt guess
     if current_information.artist is None:
@@ -671,11 +672,11 @@ def get_user_option(artist_search, search_term):
 
         page_count += 1
 
-        current_page = range(displayed_per_page * page_count ,
+        current_page = range(displayed_per_page * page_count,
                              min(length, displayed_per_page * (page_count + 1) + 1))
 
         for i in current_page:
-            display += str(i+1) + ": " + titles[i - 1] + "\n"
+            display += str(i + 1) + ": " + titles[i - 1] + "\n"
 
         if length > displayed_per_page:
             display += "Input a number outside of the current displayed to show the next {} results.".format(
@@ -754,7 +755,7 @@ def clear_history():
     f = open("assets/history.json", 'w')
     f.write("")
 
+
 def urlCleanup(url):
     url = re.sub(r' ', "%20", url)
     return url.strip()
-
