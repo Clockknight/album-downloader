@@ -253,18 +253,21 @@ def parse_artist_page(query, index):
     session = HTMLSession()
     response = session.get(urlQuery)
 
-    response.html.render(sleep=2, timeout=5)
+    response.html.render(sleep=10, timeout=0)
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
-    table = response.html.find(".card-release-title")
-    if table is None or table == []:
+    elements = response.html.find(".search_result_title")
+    if elements == [] :
         return None
-    trs = table.find_all("tr")
-    for tr in trs:
+    for element in elements:
         # Every tr with an album has this attribute
-        if tr.has_attr("data-object-type"):
-            tr = tr.find("a")
-            results.append("https://discogs.com" + tr["href"])
+        #element = element.html.find()
+        print(element.attrs["title"])
+        print(query in element.attrs["title"])
+        if query in element.attrs["title"]:
+            results.append("https://discogs.com" + element.attrs["href"])
+
+
     return results
 
 
