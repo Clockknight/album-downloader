@@ -1,4 +1,4 @@
-from requests_html import HTMLSession
+from requests_html2 import HTMLSession
 from json import JSONDecodeError
 import eyed3
 import urllib
@@ -8,7 +8,7 @@ import pytube
 from pytube import YouTube, Search
 from bs4 import BeautifulSoup
 from moviepy.editor import *
-from scripts.classes import *
+from classes import *
 import json
 import re
 import os
@@ -25,6 +25,7 @@ Second pass, also look through the videos' descriptions when looking for words i
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 
+scouting = False
 
 def option_select():
     """Text menu for user to choose option"""
@@ -46,6 +47,10 @@ Will check for new releases from artists that you have used this script to look 
 5) Ignorant Download
 Will download each song in every release, even if it has been previously downloaded. 
 
+7) Toggle Scouting
+If Scouting is ON, thne no downloading will actually occur, instead Discogs will only be scraped to gather information about releases.
+Currently Scouting is {}
+
 8) URL Mode
 Paste in a YouTube URL, and the program will download it.
 
@@ -54,7 +59,7 @@ Change the settings of the script.
 
 0) Exit
 
-    ''')
+    '''.format(str(scouting)))
 
     match option:
         case '1':
@@ -199,8 +204,6 @@ def search_process(query=None, artist_search=True, info_object=None):
     else:
         info = process_release("https://discogs.com" + query)
 
-    # TODO make search_process return an info object
-    # In order to do this, make downloadlistofsongs return an info object
     return download_list_of_songs(info)
 
 

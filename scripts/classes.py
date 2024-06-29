@@ -1,5 +1,4 @@
 import os
-from scripts import userfunctions
 
 
 class Information:
