@@ -29,6 +29,9 @@ scouting = False
 
 def option_select():
     """Text menu for user to choose option"""
+
+    global scouting
+
     option = input('''
 Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
 
@@ -72,6 +75,8 @@ Change the settings of the script.
             update()
         case '5':
             ignorant_download()
+        case '7':
+            scouting = not scouting
         case '8':
             url_input()
         case '9':
@@ -79,7 +84,8 @@ Change the settings of the script.
         case '0':
             sys.exit()
         case _:
-            print('Invalid option selected. Please try again.\n\n')
+            print('Invalid option selected. Please try again...\n\nPRESS ENTER')
+            input()
 
     return True
 
