@@ -439,9 +439,17 @@ def download_list_of_songs(info_object):
 
 
 def download_song(yt_obj, info_object):
-    """Download MP3 from YouTube object. Return Bool based on if download was successful.
-    Download as MP4 for now. Downloading the MP3 stream given causes issues when trying to edit MP3 tags."""
+    """Download MP3 from YouTube object.
+    Download as MP4 for now. Downloading the MP3 stream given causes issues when trying to edit MP3 tags.
+
+    Return path to downloaded audio file.
+
+    If scouting is set to true, then instantly return None and do not download anything."""
     # TODO  Find way to cut off dead air before and after song plays
+
+    if scouting:
+        return None
+
     try:
         video = yt_obj.streams.filter(type="video")
     except KeyError:
