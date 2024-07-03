@@ -27,12 +27,13 @@ headers = {
 
 scouting = False
 
-def option_select():
+def option_select(option=None):
     """Text menu for user to choose option"""
 
     global scouting
 
-    option = input('''
+    if option == None:
+        option = input('''
 Welcome to Clockknight's Album Downloader. Please choose from an option below by entering the option number:
 
 1) Cache Mode
