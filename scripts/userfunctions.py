@@ -594,7 +594,7 @@ def read_history(info_object=Information()):
     If no artist is specified, return all results."""
     hist_dir = info_object.history_storage
     if not os.path.exists(hist_dir):
-        open(hist_dir, 'w+')
+        open(hist_dir, 'w')
     f = open(hist_dir, 'r')
 
     try:
