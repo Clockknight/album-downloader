@@ -1,3 +1,5 @@
+import sys
+
 from requests_html2 import HTMLSession
 from json import JSONDecodeError
 import eyed3
@@ -7,7 +9,7 @@ import shutil
 import pytube
 from pytube import YouTube, Search
 from bs4 import BeautifulSoup
-from moviepy.editor import *
+from moviepy import *
 from classes import *
 import json
 import re

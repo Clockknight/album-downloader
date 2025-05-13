@@ -11,15 +11,15 @@ class UnitTestingEnvironment(unittest.TestCase):
         assert 1 == 1
 
     def test_hashing_method(self):
-        h1 = mp3hash.mp3hash('assets/Testing/urlinputtest.mp3')
-        h2 = mp3hash.mp3hash('assets/Testing/hashingtest.mp3')
-        h3 = mp3hash.mp3hash('assets/Testing/urldouble.mp3')
+        h1 = mp3hash.mp3hash('../assets/Testing/urlinputtest.mp3')
+        h2 = mp3hash.mp3hash('../assets/Testing/hashingtest.mp3')
+        h3 = mp3hash.mp3hash('../assets/Testing/urldouble.mp3')
         assert h1 != h2 and h1 == h3
 
 class InputTests(unittest.TestCase):
     @staticmethod
     def test_urlinput():
-        h1 = mp3hash.mp3hash("./assets/Testing/urlinputtest.mp3")
+        h1 = mp3hash.mp3hash("../assets/Testing/urlinputtest.mp3")
         path = url_input("https://www.youtube.com/watch?v=FVjeWMr8aLo")
         h2 = mp3hash.mp3hash(path)
         assert h1 == h2
