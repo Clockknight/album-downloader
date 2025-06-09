@@ -65,3 +65,8 @@ class MethodTests(unittest.TestCase):
 
     def test_tagsong(self):
         raise NotImplementedError()
+
+
+
+
+

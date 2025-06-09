@@ -1,4 +1,4 @@
-from userfunctions import option_select
+from scripts.userfunctions import *
 
 while option_select():
     continue

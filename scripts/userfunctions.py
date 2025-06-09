@@ -10,7 +10,7 @@ import pytube
 from pytube import YouTube, Search
 from bs4 import BeautifulSoup
 from moviepy import *
-from classes import *
+from scripts.classes import *
 import json
 import re
 import os
@@ -376,7 +376,6 @@ def download_list_of_songs(info_object):
         print('\t\tDownloading - ' + song_name)
 
         res = Search(writable(info_object.album + ' ' + info_object.artist + ' song ' + song_name))
-        res.results
         loop = len(res.results)
         # loop to check at least 100 videos, get_next_results does not pull consistent amount of videos
         while loop < 100:
@@ -388,6 +387,7 @@ def download_list_of_songs(info_object):
         if song_length == 0:
             print('\r\t\tNo song length found. Result may be inaccurate.')
 
+        # TODO setup function for below validation
         # Nested if checks to see if artist, album, and song are all used
         if info_object.artist in info_object.history:
             temp = info_object.history[info_object.artist]
@@ -399,15 +399,18 @@ def download_list_of_songs(info_object):
 
         videos = loop
 
+
+
         for video in res:  # Go through videos pulled
+            # TODO setup function for validating song based on length
             mismatched = False
             print('\r\t\tAttempting video ' + str(videos - loop + 1) + '/' + str(videos), end='\r', flush=True)
             loop -= 1
-            # Range is 85% to 110% of the song length
+            # Range is 95% to 105% of the song length
             try:
                 vid_length = video.length
                 # Filter for video codeblock
-                if vid_length not in range(int(song_length * .85), int(song_length * 1.25)) and song_length != 0:
+                if vid_length not in range(int(song_length * .95), int(song_length * 1.05)) and song_length != 0:
                     continue  # Try again with next video if it's out of range
             except TypeError:
                 print("Video length error. Usually caused when looking at an archived stream.")
