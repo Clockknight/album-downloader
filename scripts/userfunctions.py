@@ -242,6 +242,7 @@ def parse_artist(query, info_object):
         except AttributeError as e:
             print(e)
             print("Please copy console output and send to the issues page.")
+            input()
             break
         index += 1
         # if nothing is returned from above, break out (query for parse_artist_page was an empty page)

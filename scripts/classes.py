@@ -57,7 +57,8 @@ class Information:
 
     def set_artist(self, given_artist):
         self.artist = given_artist
-        self.clean_artist = given_artist  # TODO remove (n) when it's present at the end of the artist variable
+        self.clean_artist = given_artist
+        # TODO remove (n) when it's present at the end of the artist variable
         self.history = {given_artist: {}}
 
     def update_success(self, newdict):
