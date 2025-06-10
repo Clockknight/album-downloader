@@ -1,6 +1,7 @@
 import sys
 
-from requests_html2 import HTMLSession
+from requests_html import *
+
 from json import JSONDecodeError
 import eyed3
 import urllib
@@ -11,9 +12,11 @@ from pytube import YouTube, Search
 from bs4 import BeautifulSoup
 from moviepy import *
 from scripts.classes import *
+from selenium import webdriver
 import json
 import re
 import os
+import sys
 
 # TODO Fix the console only printing out part of the artist's name when downloading GG OST
 # TODO replace more text in console when going through release
@@ -25,11 +28,12 @@ Second pass, also look through the videos' descriptions when looking for words i
 """
 
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
+}
 
 scouting = False
 
-def option_select(option=None):
+def option_select(option=sys.argv[0], query=None):
     """Text menu for user to choose option"""
 
     global scouting
@@ -71,7 +75,7 @@ Change the settings of the script.
         case '1':
             cache_input()
         case '2':
-            search_process()
+            search_process(query)
         case '3':
             search_process(artist_search=False)
         case '4':
@@ -242,7 +246,7 @@ def parse_artist(query, info_object):
         except AttributeError as e:
             print(e)
             print("Please copy console output and send to the issues page.")
-            input()
+            input("Press Enter to continue:")
             break
         index += 1
         # if nothing is returned from above, break out (query for parse_artist_page was an empty page)
@@ -260,17 +264,17 @@ def parse_artist(query, info_object):
 def parse_artist_page(query, index):
     """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
+    query = urlCleanup(query + str(index))
 
-    urlQuery = urlCleanup(query + str(index))
-
-    session = HTMLSession()
-    response = session.get(urlQuery)
-
-    response.html.render(sleep=10, timeout=0)
+    browser = webdriver.Chrome()
+    browser.get(query)
+    browser.minimize_window()
+    html = browser.page_source
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
-    elements = response.html.find(".search_result_title")
+    elements = html.find(".search_result_title")
     if elements == [] :
+        print("No elements found.")
         return None
     for element in elements:
         # Every tr with an album has this attribute
