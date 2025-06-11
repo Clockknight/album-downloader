@@ -213,7 +213,7 @@ def search_process(query=None, artist_search=True, info_object=None):
 
     if artist_search:
         # Only artist mode has multipage support (Not an issue yet?)
-        info = parse_artist("https://discogs.com/search/?q=" + query + "&type=artist", info_object)
+        info = parse_artist(query, info_object)
     else:
         info = process_release("https://discogs.com" + query)
 
@@ -222,6 +222,10 @@ def search_process(query=None, artist_search=True, info_object=None):
 
 def parse_artist(query, info_object):
     """
+    This function updates the Information regarding the queried artist.
+
+
+
     Keyword Arguments:
 
     query -- url to be searched
@@ -235,12 +239,11 @@ def parse_artist(query, info_object):
     # TODO include method to get releases the artist is only credited in
     index = 1
     releases = []
-    query += "&page="
     while True:
         # store array of releases to download
         try:
             result = parse_artist_page(query, index)
-            if result is None:
+            if result is []:
                 break
             releases += result
         except AttributeError as e:
@@ -264,23 +267,28 @@ def parse_artist(query, info_object):
 def parse_artist_page(query, index):
     """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
-    query = urlCleanup(query + str(index))
+    url = urlCleanup("https://discogs.com/search/?q=" + query + "&type=artist&page=" + str(index))
 
     browser = webdriver.Chrome()
-    browser.get(query)
+    browser.get(url)
     browser.minimize_window()
+
+    # This is in case Discogs bounces you back a page if you've gone too far
+    if browser.current_url != url:
+        return []
+
+    print("Searching page #" + index + "...")
     html = browser.page_source
+    soup = BeautifulSoup(html, 'html.parser')
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
-    elements = html.find(".search_result_title")
+    elements = soup.find_all("a", {"class":"search_result_title"})
     if elements == [] :
-        print("No elements found.")
+        print("No results found.")
         return None
     for element in elements:
         # Every tr with an album has this attribute
-        #element = element.html.find()
-        print(element.attrs["title"])
-        print(query in element.attrs["title"])
+        # element = element.html.find()
         if query in element.attrs["title"]:
             results.append("https://discogs.com" + element.attrs["href"])
 
