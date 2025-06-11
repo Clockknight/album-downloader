@@ -213,36 +213,32 @@ def search_process(query=None, artist_search=True, info_object=None):
 
     if artist_search:
         # Only artist mode has multipage support (Not an issue yet?)
-        info = parse_artist(query, info_object)
+        info = download_artist(query, info_object)
     else:
-        info = process_release("https://discogs.com" + query)
+        info = process_release(query)
 
     return download_list_of_songs(info)
 
 
-def parse_artist(query, info_object):
+def download_artist(query, info_object):
     """
     This function updates the Information regarding the queried artist.
 
-
-
     Keyword Arguments:
-
     query -- url to be searched
-
     info_object -- Information object with any previous history (default to None)
-
-    Parse artist, calling parse_artist_page() for each page.
+    Parse artist, calling parse_artist_search() for each page.
 
     Return: formatted list of songs downloaded.
     """
+    
     # TODO include method to get releases the artist is only credited in
     index = 1
     releases = []
     while True:
         # store array of releases to download
         try:
-            result = parse_artist_page(query, index)
+            result = parse_artist_search(query, index)
             if result is []:
                 break
             releases += result
@@ -252,7 +248,7 @@ def parse_artist(query, info_object):
             input("Press Enter to continue:")
             break
         index += 1
-        # if nothing is returned from above, break out (query for parse_artist_page was an empty page)
+        # if nothing is returned from above, break out (query for parse_artist_search was an empty page)
         if not releases:
             break
 
@@ -264,7 +260,7 @@ def parse_artist(query, info_object):
     return info_object
 
 
-def parse_artist_page(query, index):
+def parse_artist_search(query, index):
     """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
     url = urlCleanup("https://discogs.com/search/?q=" + query + "&type=artist&page=" + str(index))
@@ -299,11 +295,8 @@ def parse_artist_page(query, index):
 def process_release(query: str, current_information=Information()):
     """
     Keyword Arguments:
-
     query -- url of a discogs release
-
     current_information -- information about the release (default new Information)
-
     Parse information for release. Adjust incoming Information properties to match query
 
     Return: Most current data of release.
@@ -311,6 +304,7 @@ def process_release(query: str, current_information=Information()):
     # TODO Check if multiple versions from different artists exist, get one with most songs
 
     #  tryexcept for passed query
+    query = "https://discogs.com" +  query
     try:
         page = requests.get(query, headers=headers)  # Use requests on the new URL
         if page.status_code != 200:
