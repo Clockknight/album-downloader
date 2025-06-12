@@ -190,11 +190,8 @@ def ignorant_download():
 def search_process(query=None, artist_search=True, info_object=None):
     """
     Keyword Arguments:
-
     query -- artist/release to be searched
-
     artist_search -- boolean describing if this is an artist search (default to True)
-
     info_object -- Information object with any previous history (default to None)
 
     Assume url to be scraped has already been selected, and pass on information to the correct function.
@@ -213,21 +210,21 @@ def search_process(query=None, artist_search=True, info_object=None):
 
     if artist_search:
         # Only artist mode has multipage support (Not an issue yet?)
-        info = download_artist(query, info_object)
+        info = artist_download(query, info_object)
     else:
         info = process_release(query)
 
     return download_list_of_songs(info)
 
 
-def download_artist(query, info_object):
+def artist_download(query, info_object):
     """
     This function updates the Information regarding the queried artist.
 
     Keyword Arguments:
     query -- url to be searched
     info_object -- Information object with any previous history (default to None)
-    Parse artist, calling parse_artist_search() for each page.
+    Parse artist, calling artist_search_parse() for each page.
 
     Return: formatted list of songs downloaded.
     """
@@ -235,13 +232,15 @@ def download_artist(query, info_object):
     # TODO include method to get releases the artist is only credited in
     index = 1
     releases = []
+
     while True:
+
         # store array of releases to download
         try:
-            result = parse_artist_search(query, index)
-            if result is []:
+            result = artist_search_parse(query, index)
+            if result == []:
                 break
-            releases += result
+            releases +=  result
         except AttributeError as e:
             print(e)
             print("Please copy console output and send to the issues page.")
@@ -249,8 +248,9 @@ def download_artist(query, info_object):
             break
         index += 1
         # if nothing is returned from above, break out (query for parse_artist_search was an empty page)
-        if not releases:
-            break
+
+    # TODO adjust this, currently releases is just the list of artist pages
+    # releases should be the list of releases
 
     read_history(info_object)
     for release in releases:
@@ -260,21 +260,19 @@ def download_artist(query, info_object):
     return info_object
 
 
-def parse_artist_search(query, index):
+def artist_search_parse(query, index):
     """Parse a single page of releases on an artist's page. Return array of release URLs."""
     results = []
-    url = urlCleanup("https://discogs.com/search/?q=" + query + "&type=artist&page=" + str(index))
+    url = urlCleanup("https://www.discogs.com/search/?q=" + query + "&type=artist&page=" + str(index))
 
-    browser = webdriver.Chrome()
-    browser.get(url)
-    browser.minimize_window()
+    html = process_page(url)
 
     # This is in case Discogs bounces you back a page if you've gone too far
-    if browser.current_url != url:
+    if html == None:
         return []
 
-    print("Searching page #" + index + "...")
-    html = browser.page_source
+    print("Searching page #" + str(index) + "...")
+
     soup = BeautifulSoup(html, 'html.parser')
 
     # < table class ="cards table_responsive layout_normal" id="artist" >
@@ -292,7 +290,7 @@ def parse_artist_search(query, index):
     return results
 
 
-def process_release(query: str, current_information=Information()):
+def process_release(url: str, current_information=Information()):
     """
     Keyword Arguments:
     query -- url of a discogs release
@@ -304,15 +302,13 @@ def process_release(query: str, current_information=Information()):
     # TODO Check if multiple versions from different artists exist, get one with most songs
 
     #  tryexcept for passed query
-    query = "https://discogs.com" +  query
     try:
-        page = requests.get(query, headers=headers)  # Use requests on the new URL
-        if page.status_code != 200:
-            raise ConnectionError(page.status_code)
-        soup = BeautifulSoup(page.text, "html.parser")  # Take requests and decode it
+
+        html = process_page(url)
+        soup = BeautifulSoup(html, "html.parser")  # Take requests and decode it
     except ConnectionError as e:
         print(e)
-        print('Error: failure processing album. Link provided - ' + query)
+        print('Error: failure processing album. Link provided - ' + url)
         print("Connection Error. Copy Console Output and talk about it in the issues page.")
         return current_information
 
@@ -365,9 +361,7 @@ def process_release(query: str, current_information=Information()):
 def download_list_of_songs(info_object):
     """
     Keyword Arguments:
-
     info_object -- Information object with prior history of release (default to None)
-
     Send pytube YouTube objects to download song.
 
     Return: Return Information with success and failed songs
@@ -792,3 +786,21 @@ def clear_history():
 def urlCleanup(url):
     url = re.sub(r' ', "%20", url)
     return url.strip()
+
+
+def process_page(url):
+    """
+    
+    Returns: HTML of the page after javascript has had a chance to run.
+    If the url given redirects, then instead it returns None.
+    """
+    browser = webdriver.Chrome()
+    browser.get(url)
+    browser.minimize_window()
+
+    if browser.current_url != url:
+        return None
+
+    return browser.page_source
+
+    
