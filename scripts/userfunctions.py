@@ -234,13 +234,14 @@ def artist_download(query, info_object):
     releases = []
 
     while True:
-
         # store array of releases to download
         try:
-            result = artist_search_parse(query, index)
-            if result == []:
+            returned_artists = artist_search_parse(query, index)
+            if not returned_artists:
                 break
-            releases +=  result
+
+            result =  artist_releases_parse(returned_artists)
+            releases += result
         except AttributeError as e:
             print(e)
             print("Please copy console output and send to the issues page.")
@@ -259,9 +260,28 @@ def artist_download(query, info_object):
 
     return info_object
 
+def artist_releases_parse(urls):
+    '''
+    Keyword arguments:
+    urls -- Either a single URL leading to the direct match, or it is an array of urls with the artist name attached following the format: [URL]:[Name]
+
+    Return: List of urls for each Release under the given author
+    '''
+    if urls is not str:
+        # TODO get user to check which url/name is correct
+        # assign urls to the chosen one
+
+    # TODO get URL for each release under the page
+    # TODO repeat for each page, in case there's more
+
+
+
+
 
 def artist_search_parse(query, index):
-    """Parse a single page of releases on an artist's page. Return array of release URLs."""
+    """Given an artist's name, find all potential matches of that artist.
+
+    Return array of URLs to potential matching artist discog pages."""
     results = []
     url = urlCleanup("https://www.discogs.com/search/?q=" + query + "&type=artist&page=" + str(index))
 
@@ -280,14 +300,17 @@ def artist_search_parse(query, index):
     if elements == [] :
         print("No results found.")
         return None
+
+    near_matches = []
     for element in elements:
         # Every tr with an album has this attribute
         # element = element.html.find()
         if query in element.attrs["title"]:
-            results.append("https://discogs.com" + element.attrs["href"])
+            return "https://discogs.com" + element.attrs["href"]
+        else:
+            near_matches.append("https://discogs.com" + element.attrs["href"] + ":" + element.attrs["title"])
 
-
-    return results
+    return near_matches
 
 
 def process_release(url: str, current_information=Information()):
@@ -800,6 +823,8 @@ def process_page(url):
 
     if browser.current_url != url:
         return None
+
+    browser.quit()
 
     return browser.page_source
 
