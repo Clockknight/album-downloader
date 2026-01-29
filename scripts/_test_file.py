@@ -1,9 +1,7 @@
-
-
 import unittest
 import time
 from unittest import mock
-from userfunctions import *
+import scripts.userfunctions as userfunctions
 import mp3hash
 
 class UnitTestingEnvironment(unittest.TestCase):
@@ -19,8 +17,8 @@ class UnitTestingEnvironment(unittest.TestCase):
 class InputTests(unittest.TestCase):
     @staticmethod
     def test_urlinput():
-        h1 = mp3hash.mp3hash("../assets/Testing/urlinputtest.mp3")
-        path = url_input("https://www.youtube.com/watch?v=FVjeWMr8aLo")
+        h1 = mp3hash.mp3hash("assets/Testing/urlinputtest.mp3")
+        path = userfunctions.url_input("https://www.youtube.com/watch?v=FVjeWMr8aLo")
         h2 = mp3hash.mp3hash(path)
         assert h1 == h2
 

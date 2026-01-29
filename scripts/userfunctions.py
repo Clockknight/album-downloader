@@ -1,5 +1,3 @@
-import sys
-
 from requests_html import *
 
 from json import JSONDecodeError
@@ -12,6 +10,7 @@ from pytube import YouTube, Search
 from bs4 import BeautifulSoup
 from moviepy import *
 from scripts.classes import *
+import lxml_html_clean
 from selenium import webdriver
 import json
 import re
@@ -268,6 +267,7 @@ def artist_releases_parse(urls):
     Return: List of urls for each Release under the given author
     '''
     if urls is not str:
+        pass
         # TODO get user to check which url/name is correct
         # assign urls to the chosen one
 
