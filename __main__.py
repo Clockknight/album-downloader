@@ -1,4 +1,3 @@
-from scripts.userfunctions import *
+import scripts.album_interface as album_interface
 
-while option_select("2", "Triple-Q"):
-    pass
+album_interface.init()

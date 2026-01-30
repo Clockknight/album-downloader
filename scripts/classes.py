@@ -75,5 +75,5 @@ class Information:
         download_path = "Downloads"
         if self.test_mode:
             download_path = os.path.join("./Test", download_path)
-        self.target_storage = os.path.join(download_path, userfunctions.writable(self.artist),
-                                           userfunctions.writable(self.album))
+        self.target_storage = os.path.join(download_path, user_functions.writable(self.artist),
+                                           user_functions.writable(self.album))

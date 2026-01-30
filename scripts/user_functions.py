@@ -1,21 +1,20 @@
-from requests_html import *
-
-from json import JSONDecodeError
-import eyed3
-import urllib
-import requests
+import json
+import os
+import re
 import shutil
+import sys
+import urllib
+from json import JSONDecodeError
+
+import eyed3
 import pytube
-from pytube import YouTube, Search
+import requests
 from bs4 import BeautifulSoup
 from moviepy import *
-from scripts.classes import *
-import lxml_html_clean
+from pytube import YouTube, Search
 from selenium import webdriver
-import json
-import re
-import os
-import sys
+
+from scripts.classes import *
 
 # TODO Fix the console only printing out part of the artist's name when downloading GG OST
 # TODO replace more text in console when going through release
@@ -76,13 +75,13 @@ Change the settings of the script.
         case '2':
             search_process(query)
         case '3':
-            search_process(artist_search=False)
+            artist_search()
         case '4':
             update()
         case '5':
             ignorant_download()
         case '7':
-            scouting = not scouting
+            scouting_toggle()
         case '8':
             url_input()
         case '9':
@@ -94,6 +93,13 @@ Change the settings of the script.
             input()
 
     return True
+
+def artist_search():
+    search_process(artist_search=False)
+
+def scouting_toggle():
+    global scouting
+    scouting = not scouting
 
 
 # Functions that take input from user, or determine logic of usage of below functions
@@ -636,7 +642,7 @@ def read_history(info_object=Information()):
 
 def parsetime(in_string):
     """Convert hh:mm:ss strings into int value in seconds."""
-    if re.fullmatch("\d[\d:]*\d", in_string) is None:
+    if re.fullmatch(r'\d[\d:]*\d', in_string) is None:
         raise Exception
     numbers = in_string.split(":")
     iteration = len(numbers) - 1
