@@ -1,7 +1,7 @@
 import unittest
 import time
 from unittest import mock
-import scripts.user_functions as user_functions
+import scripts.functions_parsing as user_functions
 import mp3hash
 
 class UnitTestingEnvironment(unittest.TestCase):

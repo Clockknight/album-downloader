@@ -1,5 +1,7 @@
 import tkinter
-import scripts.user_functions as user_functions
+import sys
+import scripts.functions_input as input
+
 
 
 def init():
@@ -13,15 +15,15 @@ def build_interface():
     window.geometry('1000x600')
 
     funcs = [
-        user_functions.cache_input,
-        user_functions.search_process,
-        user_functions.artist_search,
-        user_functions.update,
-        user_functions.ignorant_download,
-        user_functions.scouting_toggle,
-        user_functions.url_input,
+        input.cache_input,
+        input.album_search,
+        input.artist_search,
+        input.update,
+        input.ignorant_download,
+        input.scouting_toggle,
+        input.url_input,
         settings,
-        exit
+        sys.exit
     ]
 
     for thing in funcs:
