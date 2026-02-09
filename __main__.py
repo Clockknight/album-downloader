@@ -1,4 +1,3 @@
-from scripts.userfunctions import *
+import scripts.interface as inter
 
-while option_select("2", "Triple-Q"):
-    pass
+inter.main()

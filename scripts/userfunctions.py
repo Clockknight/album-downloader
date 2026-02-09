@@ -828,4 +828,8 @@ def process_page(url):
 
     return browser.page_source
 
-    
+
+
+# FIXME replace inputs and prints with calls to
+def this_helper_function(string_to_add):
+    pass
