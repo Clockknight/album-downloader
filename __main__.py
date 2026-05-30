@@ -1,3 +1,3 @@
-import scripts.functions_interface as album_interface
+import scripts.interface as inter
 
-album_interface.init()
+inter.main()
