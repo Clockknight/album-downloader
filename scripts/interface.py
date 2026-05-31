@@ -1,6 +1,6 @@
 import tkinter as tk
+from tkinter import scrolledtext
 
-label_text = ""
 
 
 def main():
@@ -13,6 +13,7 @@ def main():
 def build_window():
     root = tk.Tk()
     root.geometry("1000x800")
+    content = tk.Frame(root)
     root.title("Clockknight's Album Downloader")
 
     text_var = tk.StringVar()
@@ -52,18 +53,34 @@ def build_functions(root):
 
         button.grid(column=0)
 
+def submit_text():
+    print("yeh")
 
-def build_io(root):
-    # column 2
-    # row 0
-    # output
 
-    # row 1
-    input_label = tk.Label(root, text=label_text)
-    input_textbox = tk.Entry(root, text="Input here")
-    input_button = tk.Button(root, text="ENTER")
+def build_io(root:tk.Tk):
+    io_frame = tk.Frame(root)
+    io_frame.pack(side=tk.TOP)
 
-    input_label.grid(row=1, column=2)
-    input_textbox.grid(row=1, column=2)
-    input_button.grid(row=1, column=2)
+    input_frame = tk.Frame(io_frame)
+    input_frame.pack(side=tk.LEFT)
+
+    instruction_text = "Please input your album of choice here."
+    input_label = tk.Label(input_frame, text=instruction_text)
+    input_textbox = tk.Entry(input_frame)
+    input_button = tk.Button(input_frame, text="ENTER", command=submit_text)
+
+    input_label.grid(row=0)
+    input_textbox.grid(row=1)
+    input_button.grid(row=2)
+
+
+    output_frame = tk.Frame(io_frame, borderwidth=2, relief=tk.SUNKEN)
+    output_frame.pack(side=tk.RIGHT)
+
+    output = tk.scrolledtext.ScrolledText(output_frame)
+    output.pack()
+
+    detail_frame = tk.Frame(root, borderwidth=2, relief=tk.SUNKEN)
+    detail_frame.pack(side=tk.BOTTOM)
+
 
