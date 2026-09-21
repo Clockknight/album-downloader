@@ -1,3 +1,3 @@
-import scripts.interface as inter
+import scripts.interface as interface
 
-inter.main()
+interface.main()

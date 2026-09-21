@@ -1,3 +1,6 @@
+import scripts.functions_input as input
+
+import sys
 import tkinter as tk
 from tkinter import scrolledtext
 
@@ -5,8 +8,10 @@ from tkinter import scrolledtext
 
 def main():
     root = build_window()
-    build_functions(root)
+
+    build_main(root)
     build_io(root)
+
     root.mainloop()
 
 
@@ -37,21 +42,32 @@ def build_window():
                     wraplength=250
                     )
 
-    build_functions(root)
-
     return root
 
 
-def build_functions(root):
-    functions = []
+def build_main(root):
+    functions = [
+        input.cache_input,
+        input.album_search,
+        input.artist_search,
+        input.update,
+        input.ignorant_download,
+        input.scouting_toggle,
+        input.url_input,
+        settings,
+        sys.exit
+    ]
+    button_frame = tk.Frame(root)
 
     for func in functions:
-        button = tk.Button(root,
-                           text=func.text,
+        button = tk.Button(button_frame,
+                           text=func.__name__,
                            command=func
                            )
 
         button.grid(column=0)
+
+    button_frame.grid(column=0, row=0)
 
 def submit_text():
     print("yeh")
@@ -59,28 +75,30 @@ def submit_text():
 
 def build_io(root:tk.Tk):
     io_frame = tk.Frame(root)
-    io_frame.pack(side=tk.TOP)
+    io_frame.grid(column=1, row=0)
 
     input_frame = tk.Frame(io_frame)
-    input_frame.pack(side=tk.LEFT)
+    input_frame.grid(column=1)
 
     instruction_text = "Please input your album of choice here."
     input_label = tk.Label(input_frame, text=instruction_text)
     input_textbox = tk.Entry(input_frame)
     input_button = tk.Button(input_frame, text="ENTER", command=submit_text)
 
-    input_label.grid(row=0)
-    input_textbox.grid(row=1)
-    input_button.grid(row=2)
+    INPUT_COLUMN = 2
+    input_label.grid(row=0, column=INPUT_COLUMN)
+    input_textbox.grid(row=1, column=INPUT_COLUMN)
+    input_button.grid(row=2, column=INPUT_COLUMN)
 
 
     output_frame = tk.Frame(io_frame, borderwidth=2, relief=tk.SUNKEN)
-    output_frame.pack(side=tk.RIGHT)
+    output_frame.grid(column=1)
 
     output = tk.scrolledtext.ScrolledText(output_frame)
-    output.pack()
+    output.grid()
 
     detail_frame = tk.Frame(root, borderwidth=2, relief=tk.SUNKEN)
-    detail_frame.pack(side=tk.BOTTOM)
+    detail_frame.grid(column=2)
 
-
+def settings():
+    pass
