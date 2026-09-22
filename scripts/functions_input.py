@@ -1,3 +1,4 @@
+import scripts.interface as interface
 # TODO
 # this should be some of the more manual functions from functions_parsing
 # with an additional variable to track tkinter labels
@@ -20,8 +21,7 @@ def cache_input(filedir=None):
     cache_dict = {}
 
     if filedir is None:
-        filedir = input(
-            'Please enter the directory of the text file that has the links to appropriate files separated by '
+        filedir = interface.await_response('Please enter the directory of the text file that has the links to appropriate files separated by '
             'newlines.\n')
 
     # parses each line as new input, prompts user to clarify if each line is an artist or a user
