@@ -22,7 +22,8 @@ def cache_input(filedir=None):
 
     if filedir is None:
         filedir = interface.await_response('Please enter the directory of the text file that has the links to appropriate files separated by '
-            'newlines.\n')
+            'newlines.\n', cache_input)
+        return
 
     # parses each line as new input, prompts user to clarify if each line is an artist or a user
     # Use read_lines to separate out the links of albums
