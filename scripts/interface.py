@@ -109,16 +109,14 @@ def build_io():
 def settings():
     pass
 
-def await_response(new_text, calling_func):
+def await_response(new_text):
     global inter_root
-    textbox = inter_root.children['!frame2'] #io_frame
-    textbox = textbox.children['!frame2'] #output_frame
-    textbox = textbox.children['!frame'] #output
-    textbox = textbox.children['!scrolledtext'] #the actual textbox
-    textbox.text = "aosijd"
-
+    test = inter_root.children['!frame2'].children['!frame2'].children['!frame'].children['!scrolledtext']
     # TODO this
     # var old_text = textbox.text
     # new_text = old_text + new_text
     # textbox.text = new_text
     # TODO how to send function on tkinter button press?
+    # maybe two functions?
+    # maybe pressing calls something in functions_input?
+    print(inter_root)
